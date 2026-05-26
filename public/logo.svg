@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <!-- Rich Golden Gradients -->
+    <linearGradient id="primary-gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE29A" />
+      <stop offset="30%" stop-color="#D4AF37" />
+      <stop offset="70%" stop-color="#AA7C11" />
+      <stop offset="100%" stop-color="#6B4C00" />
+    </linearGradient>
+
+    <linearGradient id="glow-gold" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#FFF9E6" />
+      <stop offset="50%" stop-color="#F59E0B" />
+      <stop offset="100%" stop-color="#B45309" />
+    </linearGradient>
+
+    <!-- Deep Metallic Steel -->
+    <linearGradient id="dark-steel" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#334155" />
+      <stop offset="50%" stop-color="#1E293B" />
+      <stop offset="100%" stop-color="#0F172A" />
+    </linearGradient>
+
+    <!-- Liquid Orange/Amber Accent -->
+    <linearGradient id="neon-orange" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#FF5100" />
+      <stop offset="50%" stop-color="#FF9000" />
+      <stop offset="100%" stop-color="#FFD000" />
+    </linearGradient>
+
+    <!-- Glassmorphism Highlight -->
+    <linearGradient id="glass-reflect" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFFFFF" stop-opacity="0.35" />
+      <stop offset="30%" stop-color="#FFFFFF" stop-opacity="0.05" />
+      <stop offset="100%" stop-color="#FFFFFF" stop-opacity="0" />
+    </linearGradient>
+
+    <!-- Glow Filter -->
+    <filter id="intense-glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10" result="blur" />
+      <feMerge>
+        <feMergeNode in="blur" />
+        <feMergeNode in="SourceGraphic" />
+      </feMerge>
+    </filter>
+
+    <!-- Outer Shadow for depth -->
+    <filter id="outer-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.9" />
+    </filter>
+  </defs>
+
+  <!-- Circular Outer Shield Background -->
+  <circle cx="256" cy="256" r="240" fill="#060913" stroke="url(#primary-gold)" stroke-width="4" filter="url(#outer-shadow)" />
+
+  <!-- Technical/Architectural Grid Pattern Background -->
+  <g opacity="0.12" stroke="url(#primary-gold)" stroke-width="1" fill="none">
+    <circle cx="256" cy="256" r="220" />
+    <circle cx="256" cy="256" r="180" />
+    <circle cx="256" cy="256" r="140" />
+    <!-- Diagonal architectural lines -->
+    <line x1="100" y1="100" x2="412" y2="412" />
+    <line x1="412" y1="100" x2="100" y2="412" />
+    <line x1="256" y1="16" x2="256" y2="496" />
+    <line x1="16" y1="256" x2="496" y2="256" />
+    <!-- Hexagonal outer structure -->
+    <polygon points="256,36 446,146 446,366 256,476 66,366 66,146" />
+  </g>
+
+  <!-- Elegant Golden Crown Teeth / Gear Notches (industrial feeling) -->
+  <g fill="url(#primary-gold)" opacity="0.8">
+    <rect x="252" y="8" width="8" height="16" rx="2" />
+    <rect x="252" y="488" width="8" height="16" rx="2" />
+    <rect x="8" y="252" width="16" height="8" rx="2" />
+    <rect x="488" y="252" width="16" height="8" rx="2" />
+    <circle cx="256" cy="40" r="4" />
+    <circle cx="256" cy="472" r="4" />
+    <circle cx="40" cy="256" r="4" />
+    <circle cx="472" cy="256" r="4" />
+  </g>
+
+  <!-- 3D Layered Golden Octagon Frame -->
+  <polygon points="256,50 434,153 434,359 256,462 78,359 78,153" fill="none" stroke="url(#primary-gold)" stroke-width="6" filter="url(#intense-glow)" />
+
+  <!-- Highly Stylish, 3D Isometric "K" Structure (Skyscraper Beams / Luxury Blocks) -->
+  <g transform="translate(0, 0)">
+    <!-- ================= PILLAR (Left Vertical) ================= -->
+    <!-- Pillar Front-Right Face -->
+    <path d="M160 140 L210 110 L210 370 L160 400 Z" fill="url(#primary-gold)" />
+    <!-- Pillar Front-Left Face -->
+    <path d="M120 120 L160 140 L160 400 L120 380 Z" fill="url(#dark-steel)" />
+    <!-- Pillar Top Face -->
+    <path d="M120 120 L170 90 L210 110 L160 140 Z" fill="url(#glow-gold)" />
+
+    <!-- ================= UPPER DIAGONAL BEAM ================= -->
+    <!-- Beam Bottom Face -->
+    <path d="M210 270 L340 140 L380 160 L210 310 Z" fill="url(#neon-orange)" />
+    <!-- Beam Front-Left Face -->
+    <path d="M210 270 L210 310 L330 210 L330 170 Z" fill="url(#dark-steel)" opacity="0.8" />
+    <!-- Beam Top-Right Face (Glossy Liquid Gold) -->
+    <path d="M210 270 L330 170 L380 120 L340 140 Z" fill="url(#primary-gold)" />
+    <!-- High gloss overlay on upper diagonal -->
+    <path d="M210 270 L330 170 L380 120 L340 140 Z" fill="url(#glass-reflect)" />
+
+    <!-- ================= LOWER DIAGONAL BEAM ================= -->
+    <!-- Beam Left Face -->
+    <path d="M220 260 L350 370 L350 410 L220 290 Z" fill="url(#dark-steel)" />
+    <!-- Beam Right Face (Gleaming Copper/Gold) -->
+    <path d="M220 260 L380 340 L380 380 L350 410 Z" fill="url(#primary-gold)" />
+    <!-- Beam Top Face -->
+    <path d="M220 260 L350 370 L380 340 L240 240 Z" fill="url(#glow-gold)" />
+  </g>
+
+  <!-- Sparkle/Specularity Accents (Adding that ultra premium billionaire-grade shine) -->
+  <!-- Top Sparkle -->
+  <path d="M170 90 L175 75 L170 60 L165 75 Z" fill="#FFFFFF" filter="url(#intense-glow)" />
+  <!-- Center Intersection Sparkle -->
+  <circle cx="210" cy="270" r="6" fill="#FFFFFF" filter="url(#intense-glow)" />
+  <path d="M210 270 L210 250 M210 270 L210 290 M210 270 L190 270 M210 270 L230 270" stroke="#FFFFFF" stroke-width="2" />
+  
+  <!-- Lower Right Sparkle -->
+  <path d="M380 340 L383 330 L380 320 L377 330 Z" fill="#FFFFFF" filter="url(#intense-glow)" />
+
+  <!-- Soft diagonal dust/light reflection across the whole emblem -->
+  <polygon points="50,150 450,250 450,300 50,200" fill="url(#glass-reflect)" opacity="0.4" pointer-events="none" />
+</svg>

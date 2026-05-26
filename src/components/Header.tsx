@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ShoppingCart, User, Menu, X, Heart, Phone, MapPin, ChevronDown, Lock } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, Heart, Phone, MapPin, ChevronDown, Lock, Minus, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useInventory } from "@/context/InventoryContext";
 
@@ -15,7 +16,8 @@ export default function Header() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
-  const { isOwner, loginOwner, logoutOwner } = useInventory();
+  const { isOwner, loginOwner, logoutOwner, cart, cartCount, removeFromCart, updateCartQuantity, clearCart } = useInventory();
+  const [showCart, setShowCart] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -71,8 +73,8 @@ export default function Header() {
             
             {/* Logo */}
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl bg-gradient-to-br from-saffron to-gold flex items-center justify-center shadow-lg glow-saffron-sm group-hover:scale-105 transition-transform duration-300">
-                <span className="text-navy font-rajdhani font-bold text-lg md:text-xl">K</span>
+              <div className="relative w-10 h-10 md:w-12 md:h-12 flex items-center justify-center group-hover:scale-105 transition-transform duration-300">
+                <Image src="/logo.svg" alt="Kushal Enterprises Logo" width={48} height={48} className="w-full h-full drop-shadow-[0_0_12px_rgba(245,158,11,0.35)]" />
               </div>
               <div className="flex flex-col">
                 <span className="text-xl md:text-2xl font-rajdhani font-bold text-white leading-none tracking-tight">
@@ -116,13 +118,87 @@ export default function Header() {
                 <Heart size={20} strokeWidth={1.5} />
                 <span className="text-[9px] mt-1 font-medium">Saved</span>
               </button>
-              <button className="flex flex-col items-center text-slate/70 hover:text-saffron transition-colors duration-200 relative p-2 rounded-xl hover:bg-white/5 cursor-pointer">
-                <ShoppingCart size={20} strokeWidth={1.5} />
-                <span className="absolute -top-0.5 right-0 bg-gradient-to-r from-saffron to-gold text-navy text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
-                  0
-                </span>
-                <span className="text-[9px] mt-1 font-medium hidden md:block">Cart</span>
-              </button>
+              <div className="relative">
+                <button 
+                  onClick={() => setShowCart(!showCart)}
+                  className="flex flex-col items-center text-slate/70 hover:text-saffron transition-colors duration-200 relative p-2 rounded-xl hover:bg-white/5 cursor-pointer"
+                >
+                  <ShoppingCart size={20} strokeWidth={1.5} />
+                  {cartCount > 0 && (
+                    <span className="absolute -top-0.5 right-0 bg-gradient-to-r from-saffron to-gold text-navy text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-sm">
+                      {cartCount > 9 ? '9+' : cartCount}
+                    </span>
+                  )}
+                  <span className="text-[9px] mt-1 font-medium hidden md:block">Cart</span>
+                </button>
+
+                {/* Cart Dropdown */}
+                <AnimatePresence>
+                  {showCart && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setShowCart(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                        className="absolute right-0 top-full mt-3 w-[340px] md:w-[380px] glass-card rounded-2xl border border-white/10 shadow-2xl z-50 overflow-hidden"
+                      >
+                        <div className="p-4 border-b border-white/10 flex items-center justify-between">
+                          <h3 className="font-rajdhani font-bold text-white text-lg">Shopping Cart</h3>
+                          <span className="text-xs text-white/40 font-medium">{cartCount} item{cartCount !== 1 ? 's' : ''}</span>
+                        </div>
+
+                        <div className="max-h-[320px] overflow-y-auto">
+                          {cart.length === 0 ? (
+                            <div className="p-8 text-center">
+                              <ShoppingCart size={32} className="text-white/10 mx-auto mb-3" />
+                              <p className="text-white/40 text-sm">Your cart is empty</p>
+                            </div>
+                          ) : (
+                            <div className="divide-y divide-white/5">
+                              {cart.map(item => (
+                                <div key={item.goodId} className="p-3 flex gap-3 hover:bg-white/5 transition-colors">
+                                  <div className="w-14 h-14 rounded-lg overflow-hidden relative border border-white/10 shrink-0">
+                                    <Image src={item.image} alt={item.name} fill className="object-cover" sizes="56px" />
+                                  </div>
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="text-white text-xs font-bold truncate">{item.name}</h4>
+                                    <p className="text-saffron text-[10px] font-bold mt-0.5">{item.price}</p>
+                                    <p className="text-white/30 text-[10px]">{item.categoryName}</p>
+                                    <div className="flex items-center gap-2 mt-1.5">
+                                      <button onClick={() => updateCartQuantity(item.goodId, item.quantity - 1)} className="w-5 h-5 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 transition-colors cursor-pointer">
+                                        <Minus size={10} />
+                                      </button>
+                                      <span className="text-white text-xs font-bold min-w-[16px] text-center">{item.quantity}</span>
+                                      <button onClick={() => updateCartQuantity(item.goodId, item.quantity + 1)} className="w-5 h-5 rounded bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/60 transition-colors cursor-pointer">
+                                        <Plus size={10} />
+                                      </button>
+                                      <button onClick={() => removeFromCart(item.goodId)} className="ml-auto w-5 h-5 rounded bg-red-500/10 hover:bg-red-500/20 flex items-center justify-center text-red-400 transition-colors cursor-pointer">
+                                        <Trash2 size={10} />
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+
+                        {cart.length > 0 && (
+                          <div className="p-4 border-t border-white/10 space-y-3">
+                            <button onClick={clearCart} className="w-full text-xs text-red-400 hover:text-red-300 transition-colors cursor-pointer text-center py-1">
+                              Clear Cart
+                            </button>
+                            <button className="w-full bg-gradient-to-r from-saffron to-gold text-navy font-bold py-3 rounded-xl text-sm shadow-lg shadow-saffron/20 hover:shadow-saffron/30 transition-all cursor-pointer">
+                              Request Quote for {cartCount} item{cartCount !== 1 ? 's' : ''}
+                            </button>
+                          </div>
+                        )}
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
+              </div>
               
               {/* Mobile Menu Toggle */}
               <button 
@@ -142,7 +218,7 @@ export default function Header() {
         <div className="container mx-auto px-4 max-w-7xl">
           <ul className="flex items-center space-x-1 py-0 text-sm font-medium">
             <li>
-              <Link href="#" className="flex items-center gap-1 px-4 py-3 hover:text-saffron transition-colors duration-200 hover:bg-white/5 rounded-lg cursor-pointer">
+              <Link href="/catalog" className="flex items-center gap-1 px-4 py-3 hover:text-saffron transition-colors duration-200 hover:bg-white/5 rounded-lg cursor-pointer">
                 All Categories <ChevronDown size={14} />
               </Link>
             </li>

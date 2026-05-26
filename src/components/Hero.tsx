@@ -159,41 +159,14 @@ export default function Hero() {
             <div className="relative">
               {/* Glowing ring behind cube */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="w-72 h-72 rounded-full border border-saffron/10 animate-[spin_30s_linear_infinite]" />
-                <div className="absolute w-56 h-56 rounded-full border border-gold/5 animate-[spin_20s_linear_infinite_reverse]" />
-                <div className="absolute w-40 h-40 rounded-full border border-saffron/8 animate-[spin_25s_linear_infinite]" />
+                <div className="w-72 h-72 rounded-full border-2 border-saffron/40 shadow-[0_0_40px_rgba(245,158,11,0.2)] animate-[spin_15s_linear_infinite]" />
+                <div className="absolute w-56 h-56 rounded-full border border-gold/40 shadow-[0_0_30px_rgba(251,191,36,0.2)] animate-[spin_10s_linear_infinite_reverse]" />
+                <div className="absolute w-40 h-40 rounded-full border border-white/20 animate-[spin_12s_linear_infinite]" />
               </div>
               <FloatingCube />
             </div>
 
-            {/* Floating info cards */}
-            <motion.div
-              animate={{ y: [0, -10, 0] }}
-              transition={{ repeat: Infinity, duration: 4, ease: "easeInOut" }}
-              className="absolute top-10 right-0 glass-card rounded-2xl px-4 py-3 flex items-center gap-3"
-            >
-              <div className="w-8 h-8 rounded-lg bg-accent-green/20 flex items-center justify-center">
-                <Shield size={16} className="text-accent-green" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-white">Brand Verified</div>
-                <div className="text-[10px] text-slate/50">All products authorized</div>
-              </div>
-            </motion.div>
 
-            <motion.div
-              animate={{ y: [0, 10, 0] }}
-              transition={{ repeat: Infinity, duration: 5, ease: "easeInOut", delay: 1 }}
-              className="absolute bottom-20 left-0 glass-card rounded-2xl px-4 py-3 flex items-center gap-3"
-            >
-              <div className="w-8 h-8 rounded-lg bg-saffron/20 flex items-center justify-center">
-                <Truck size={16} className="text-saffron" />
-              </div>
-              <div>
-                <div className="text-xs font-bold text-white">Fast Delivery</div>
-                <div className="text-[10px] text-slate/50">Same-day dispatch available</div>
-              </div>
-            </motion.div>
           </motion.div>
         </div>
       </motion.div>

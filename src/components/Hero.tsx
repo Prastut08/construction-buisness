@@ -99,7 +99,15 @@ export default function Hero() {
               transition={{ duration: 0.6, delay: 0.7 }}
               className="flex flex-wrap gap-4 mb-12"
             >
-              <button className="bg-gradient-to-r from-saffron to-gold hover:from-saffron-dark hover:to-saffron text-navy px-8 py-4 rounded-2xl font-bold text-base flex items-center gap-2.5 transition-all duration-300 shadow-lg shadow-saffron/20 hover:shadow-saffron/30 hover:shadow-xl cursor-pointer group">
+              <button 
+                onClick={() => {
+                  const element = document.getElementById("categories");
+                  if (element) {
+                    element.scrollIntoView({ behavior: "smooth" });
+                  }
+                }}
+                className="bg-gradient-to-r from-saffron to-gold hover:from-saffron-dark hover:to-saffron text-navy px-8 py-4 rounded-2xl font-bold text-base flex items-center gap-2.5 transition-all duration-300 shadow-lg shadow-saffron/20 hover:shadow-saffron/30 hover:shadow-xl cursor-pointer group"
+              >
                 Explore Products
                 <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
               </button>

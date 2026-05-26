@@ -37,7 +37,7 @@ export default function Categories() {
     : null;
 
   return (
-    <section className="py-24 relative overflow-hidden">
+    <section id="categories" className="py-24 relative overflow-hidden">
       <div className="absolute inset-0 bg-dots opacity-30" />
       <div className="absolute top-1/4 left-0 w-80 h-80 bg-saffron/3 rounded-full blur-[120px]" />
       <div className="absolute bottom-1/3 right-0 w-96 h-96 bg-accent-blue/3 rounded-full blur-[120px]" />

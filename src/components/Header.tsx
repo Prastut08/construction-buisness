@@ -16,8 +16,25 @@ export default function Header() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const router = useRouter();
-  const { isOwner, loginOwner, logoutOwner, cart, cartCount, removeFromCart, updateCartQuantity, clearCart } = useInventory();
+  const { isOwner, loginOwner, logoutOwner, cart, cartCount, removeFromCart, updateCartQuantity, clearCart, categories, addToCart } = useInventory();
   const [showCart, setShowCart] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const allProducts = categories.flatMap(cat => 
+    cat.typesOfGoods.map(good => ({
+      ...good,
+      categoryId: cat.id,
+      categoryName: cat.name
+    }))
+  );
+
+  const filteredProducts = searchQuery.trim() === ""
+    ? []
+    : allProducts.filter(product =>
+        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        product.categoryName.toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
   useEffect(() => {
     const handleScroll = () => {
@@ -92,8 +109,12 @@ export default function Header() {
                 <input
                   type="text"
                   placeholder="Search cement, steel, tiles, tools..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setSearchFocused(true);
+                  }}
                   onFocus={() => setSearchFocused(true)}
-                  onBlur={() => setSearchFocused(false)}
                   className={`w-full bg-surface-light/80 border rounded-2xl py-3 px-5 pr-12 text-sm text-white placeholder:text-slate/50 focus:outline-none transition-all duration-300 ${
                     searchFocused
                       ? 'border-saffron/40 shadow-[0_0_20px_rgba(245,158,11,0.1)] bg-surface-light'
@@ -103,6 +124,63 @@ export default function Header() {
                 <button className="absolute right-2 top-1/2 -translate-y-1/2 bg-gradient-to-r from-saffron to-gold text-navy p-2 rounded-xl hover:shadow-lg hover:shadow-saffron/20 transition-all duration-300 cursor-pointer">
                   <Search size={16} strokeWidth={2.5} />
                 </button>
+
+                {/* Search Results Dropdown */}
+                <AnimatePresence>
+                  {searchFocused && searchQuery.trim() !== "" && (
+                    <>
+                      <div className="fixed inset-0 z-40" onClick={() => setSearchFocused(false)} />
+                      <motion.div
+                        initial={{ opacity: 0, y: 10, scale: 0.98 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 10, scale: 0.98 }}
+                        className="absolute left-0 right-0 top-full mt-3 glass-card rounded-2xl border border-white/10 shadow-2xl z-50 overflow-hidden max-h-[350px] overflow-y-auto"
+                      >
+                        <div className="p-3 border-b border-white/10 text-xs text-white/40 font-semibold tracking-wider uppercase">
+                          Search Results
+                        </div>
+                        {filteredProducts.length === 0 ? (
+                          <div className="p-6 text-center text-white/50 text-sm">
+                            No commodity found named <span className="text-saffron font-bold">"{searchQuery}"</span>
+                          </div>
+                        ) : (
+                          <div className="divide-y divide-white/5">
+                            {filteredProducts.map(product => (
+                              <div key={product.id} className="p-3 flex items-center justify-between gap-3 hover:bg-white/5 transition-colors">
+                                <div className="flex items-center gap-3 min-w-0">
+                                  <div className="w-10 h-10 rounded-lg overflow-hidden relative border border-white/10 shrink-0">
+                                    <Image src={product.image} alt={product.name} fill className="object-cover" sizes="40px" />
+                                  </div>
+                                  <div className="min-w-0">
+                                    <h4 className="text-white text-xs font-bold truncate">{product.name}</h4>
+                                    <p className="text-saffron text-[10px] font-bold mt-0.5">{product.price}</p>
+                                    <p className="text-white/30 text-[10px]">{product.categoryName}</p>
+                                  </div>
+                                </div>
+                                <button
+                                  disabled={!product.isAvailable}
+                                  onClick={() => {
+                                    if (product.isAvailable) {
+                                      addToCart(product.categoryId, product.categoryName, product);
+                                    }
+                                  }}
+                                  className={`font-bold py-1.5 px-3 rounded-lg text-xs transition-all flex items-center gap-1.5 shrink-0 ${
+                                    product.isAvailable
+                                      ? 'bg-saffron text-navy hover:bg-gold cursor-pointer'
+                                      : 'bg-white/5 text-white/20 cursor-not-allowed'
+                                  }`}
+                                >
+                                  <ShoppingCart size={12} />
+                                  {product.isAvailable ? 'Add' : 'Out'}
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </motion.div>
+                    </>
+                  )}
+                </AnimatePresence>
               </div>
             </div>
 
@@ -309,9 +387,55 @@ export default function Header() {
                 <input
                   type="text"
                   placeholder="Search products..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full bg-surface-light border border-white/10 rounded-2xl py-3 px-4 pr-10 text-sm text-white placeholder:text-slate/50 focus:outline-none focus:border-saffron/30"
                 />
                 <Search className="absolute right-4 top-1/2 -translate-y-1/2 text-saffron" size={16} />
+
+                {/* Mobile Search Results */}
+                {searchQuery.trim() !== "" && (
+                  <div className="mt-3 glass-card rounded-2xl border border-white/10 overflow-hidden max-h-[250px] overflow-y-auto divide-y divide-white/5">
+                    <div className="p-3 text-[10px] text-white/40 font-semibold tracking-wider uppercase bg-white/5">
+                      Search Results
+                    </div>
+                    {filteredProducts.length === 0 ? (
+                      <div className="p-4 text-center text-white/50 text-xs">
+                        No commodity found named <span className="text-saffron font-bold">"{searchQuery}"</span>
+                      </div>
+                    ) : (
+                      filteredProducts.map(product => (
+                        <div key={product.id} className="p-3 flex items-center justify-between gap-2 hover:bg-white/5 transition-colors">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-8 h-8 rounded-lg overflow-hidden relative border border-white/10 shrink-0">
+                              <Image src={product.image} alt={product.name} fill className="object-cover" sizes="32px" />
+                            </div>
+                            <div className="min-w-0">
+                              <h4 className="text-white text-xs font-bold truncate">{product.name}</h4>
+                              <p className="text-saffron text-[9px] font-bold">{product.price}</p>
+                            </div>
+                          </div>
+                          <button
+                            disabled={!product.isAvailable}
+                            onClick={() => {
+                              if (product.isAvailable) {
+                                addToCart(product.categoryId, product.categoryName, product);
+                              }
+                            }}
+                            className={`font-bold py-1 px-2.5 rounded-lg text-[10px] transition-all flex items-center gap-1 shrink-0 ${
+                              product.isAvailable
+                                ? 'bg-saffron text-navy hover:bg-gold'
+                                : 'bg-white/5 text-white/20'
+                            }`}
+                          >
+                            <ShoppingCart size={10} />
+                            {product.isAvailable ? 'Add' : 'Out'}
+                          </button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
               <ul className="space-y-1 font-medium text-white/90 pb-4">
                 {["Cement & Concrete", "TMT Steel Bars", "Tiles & Flooring", "Plumbing & Pipes", "Hardware & Tools"].map((item) => (

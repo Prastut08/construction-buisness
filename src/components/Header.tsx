@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ShoppingCart, User, Menu, X, Heart, Phone, MapPin, ChevronDown, Lock, Minus, Plus, Trash2 } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, Heart, Phone, MapPin, Lock, Minus, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";

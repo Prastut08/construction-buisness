@@ -1,8 +1,8 @@
 "use client";
 
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { ArrowRight, Play, Shield, Truck, Star } from "lucide-react";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 import Image from "next/image";
 import FloatingCube from "./FloatingCube";
 
@@ -16,6 +16,22 @@ export default function Hero() {
   const opacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
   const scale = useTransform(scrollYProgress, [0, 0.8], [1, 0.95]);
 
+  const [currentBg, setCurrentBg] = useState(0);
+  const backgroundImages = [
+    { src: "/hero-construction.png", alt: "Construction site at golden hour" },
+    { src: "/luxury-architecture.png", alt: "Ultra-luxury modern architectural skyscraper" },
+    { src: "/contractor-site.png", alt: "Contractors collaborating on site" },
+    { src: "/industrial-warehouse.png", alt: "Premium TMT steel rebars and industrial warehouse" },
+    { src: "/products-showcase.png", alt: "High-end construction materials showcase" }
+  ];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentBg((prev) => (prev + 1) % backgroundImages.length);
+    }, 4500);
+    return () => clearInterval(timer);
+  }, [backgroundImages.length]);
+
   const stats = [
     { value: "15K+", label: "Products" },
     { value: "5K+", label: "Contractors" },
@@ -27,18 +43,29 @@ export default function Hero() {
       ref={containerRef}
       className="relative min-h-[100vh] flex items-center overflow-hidden bg-navy"
     >
-      {/* Background Image with parallax */}
+      {/* Background Image Slideshow with parallax */}
       <motion.div style={{ y }} className="absolute inset-0">
-        <Image
-          src="/hero-construction.png"
-          alt="Construction site at golden hour"
-          fill
-          priority
-          className="object-cover"
-          sizes="100vw"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/90 to-navy/60" />
-        <div className="absolute inset-0 bg-gradient-to-t from-navy via-transparent to-navy/30" />
+        <AnimatePresence mode="popLayout">
+          <motion.div
+            key={currentBg}
+            initial={{ opacity: 0, scale: 1.15 }}
+            animate={{ opacity: 1, scale: 1.02 }}
+            exit={{ opacity: 0, scale: 0.95 }}
+            transition={{ duration: 2.5, ease: "easeInOut" }}
+            className="absolute inset-0 w-full h-full"
+          >
+            <Image
+              src={backgroundImages[currentBg].src}
+              alt={backgroundImages[currentBg].alt}
+              fill
+              priority
+              className="object-cover"
+              sizes="100vw"
+            />
+          </motion.div>
+        </AnimatePresence>
+        <div className="absolute inset-0 bg-gradient-to-r from-navy via-navy/92 to-navy/70 z-10" />
+        <div className="absolute inset-0 bg-gradient-to-t from-navy via-transparent to-navy/40 z-10" />
       </motion.div>
 
       {/* Grid overlay */}

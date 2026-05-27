@@ -46,18 +46,6 @@ export default function Header() {
 
   return (
     <>
-      {/* Announcement Bar */}
-      <div className="bg-gradient-to-r from-saffron via-saffron-dark to-saffron text-white text-xs py-2 px-4 text-center font-semibold tracking-wide relative overflow-hidden">
-        <div className="relative z-10 flex items-center justify-center gap-2">
-          <span className="hidden md:inline">🏗️</span>
-          <span>Grand Opening Sale — <strong>Flat 20% OFF</strong> on all Cement & Steel orders above ₹50,000</span>
-          <Link href="#" className="underline underline-offset-2 hover:text-white/80 transition-colors ml-2 font-bold">
-            Shop Now →
-          </Link>
-        </div>
-        <div className="absolute inset-0 shimmer" />
-      </div>
-
       {/* Topbar */}
       <div className="bg-navy-medium text-slate text-xs py-2.5 px-4 hidden md:block border-b border-white/5">
         <div className="container mx-auto flex justify-between items-center max-w-7xl">

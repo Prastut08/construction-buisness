@@ -279,30 +279,7 @@ export default function Header() {
         </div>
       </header>
 
-      {/* Navigation Links Desktop */}
-      <nav className={`bg-navy-light/90 backdrop-blur-md text-white hidden md:block border-b border-white/5 sticky top-[68px] z-40 transition-all duration-300 ${isScrolled ? 'shadow-lg shadow-black/20' : ''}`}>
-        <div className="container mx-auto px-4 max-w-7xl">
-          <ul className="flex items-center space-x-1 py-0 text-sm font-medium">
-            <li>
-              <Link href="/catalog" className="flex items-center gap-1 px-4 py-3 hover:text-saffron transition-colors duration-200 hover:bg-white/5 rounded-lg cursor-pointer">
-                All Categories <ChevronDown size={14} />
-              </Link>
-            </li>
-            {["Cement & Concrete", "TMT Steel Bars", "Tiles & Flooring", "Plumbing", "Electricals", "Paints"].map((item) => (
-              <li key={item}>
-                <Link href="#" className="px-4 py-3 hover:text-saffron transition-colors duration-200 hover:bg-white/5 rounded-lg block cursor-pointer">
-                  {item}
-                </Link>
-              </li>
-            ))}
-            <li>
-              <Link href="#" className="px-4 py-3 text-saffron font-bold transition-colors duration-200 hover:bg-saffron/10 rounded-lg block cursor-pointer">
-                Today&apos;s Deals
-              </Link>
-            </li>
-          </ul>
-        </div>
-      </nav>
+
 
       {/* Login Modal */}
       <AnimatePresence>

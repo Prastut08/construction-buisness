@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ArrowRight, Shield, Sparkles, Building, CheckCircle2, ShoppingCart, Tag, Layers, Hammer, Droplets, Zap, Paintbrush, Lock, TreePine, LayoutGrid } from "lucide-react";
+import { X, Shield, Sparkles, Building, CheckCircle2, ShoppingCart, Tag, Layers, Hammer, Droplets, Zap, Paintbrush, Lock, TreePine, LayoutGrid, Minus, Plus, ArrowRight } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useInventory, CategoryData, GoodType } from "@/context/InventoryContext";
@@ -25,6 +25,12 @@ export default function Categories() {
   const [selectedCategory, setSelectedCategory] = useState<CategoryData | null>(null);
   const [selectedGood, setSelectedGood] = useState<GoodType | null>(null);
   const [addedToCart, setAddedToCart] = useState<string | null>(null);
+  const [productQuantity, setProductQuantity] = useState<number>(1);
+
+  const handleSelectGood = (good: GoodType | null) => {
+    setSelectedGood(good);
+    setProductQuantity(1);
+  };
 
   // When opening modal, keep the selected category reference fresh from context
   const activeCategory = selectedCategory 
@@ -38,9 +44,9 @@ export default function Categories() {
 
   return (
     <section id="categories" className="py-24 relative overflow-hidden">
-      <div className="absolute inset-0 bg-dots opacity-30" />
-      <div className="absolute top-1/4 left-0 w-80 h-80 bg-saffron/3 rounded-full blur-[120px]" />
-      <div className="absolute bottom-1/3 right-0 w-96 h-96 bg-accent-blue/3 rounded-full blur-[120px]" />
+      <div className="absolute inset-0 bg-dots opacity-30 pointer-events-none" />
+      <div className="absolute top-1/4 left-0 w-80 h-80 bg-saffron/3 rounded-full blur-[120px] pointer-events-none" />
+      <div className="absolute bottom-1/3 right-0 w-96 h-96 bg-accent-blue/3 rounded-full blur-[120px] pointer-events-none" />
 
       <div className="container mx-auto px-4 max-w-7xl relative z-10">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-14 gap-4">
@@ -66,7 +72,7 @@ export default function Categories() {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
           {categories.map((category, index) => (
             <motion.div key={category.id}
-              onClick={() => { setSelectedCategory(category); setSelectedGood(null); }}
+              onClick={() => { setSelectedCategory(category); handleSelectGood(null); }}
               initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
               transition={{ delay: index * 0.05, duration: 0.5 }} whileHover={{ y: -8, scale: 1.03 }}
               className="glass-card glass-card-hover rounded-2xl p-5 flex flex-col items-center justify-center cursor-pointer text-center relative group min-h-[140px]">
@@ -91,7 +97,7 @@ export default function Categories() {
           {activeCategory && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/70 backdrop-blur-xl z-50 flex items-center justify-center p-4"
-              onClick={() => { setSelectedCategory(null); setSelectedGood(null); }}>
+              onClick={() => { setSelectedCategory(null); handleSelectGood(null); }}>
               <motion.div initial={{ scale: 0.95, y: 20 }} animate={{ scale: 1, y: 0 }} exit={{ scale: 0.95, y: 20 }}
                 transition={{ type: "spring", damping: 25 }}
                 className="glass-card rounded-3xl w-full max-w-6xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
@@ -99,9 +105,9 @@ export default function Categories() {
                 
                 {/* Modal Header */}
                 <div className={`p-8 bg-gradient-to-r ${activeCategory.bgGradient} text-white relative overflow-hidden`}>
-                  <div className="absolute inset-0 bg-grid opacity-10" />
-                  <button onClick={() => { setSelectedCategory(null); setSelectedGood(null); }}
-                    className="absolute top-6 right-6 bg-white/10 hover:bg-white/25 hover:rotate-90 transition-all rounded-full p-2 text-white/95 cursor-pointer z-10">
+                  <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
+                  <button onClick={() => { setSelectedCategory(null); handleSelectGood(null); }}
+                    className="absolute top-6 right-6 bg-white/10 hover:bg-white/25 hover:rotate-90 transition-all rounded-full p-2 text-white/95 cursor-pointer z-50">
                     <X size={20} />
                   </button>
                   <div className="flex items-center gap-4 mb-2 relative z-10">
@@ -126,7 +132,7 @@ export default function Categories() {
                     ) : (
                       <div className="space-y-2.5 mb-6">
                         {activeCategory.typesOfGoods.map((good, idx) => (
-                          <motion.div key={good.id} onClick={() => setSelectedGood(good)}
+                          <motion.div key={good.id} onClick={() => handleSelectGood(good)}
                             initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
                             className={`flex items-center justify-between p-4 rounded-xl cursor-pointer border transition-all group ${
                               activeGood?.id === good.id
@@ -174,13 +180,20 @@ export default function Categories() {
                         <motion.div key={activeGood.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.3 }} className="flex flex-col h-full justify-between">
                           <div>
-                            <div className="h-56 relative rounded-2xl overflow-hidden shadow-xl border border-white/5 mb-5 bg-surface relative group">
+                            <div className="h-56 relative rounded-2xl overflow-hidden shadow-xl border border-white/5 mb-5 bg-surface group">
                               <Image src={activeGood.image} alt={activeGood.name} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
                               <div className="absolute top-3 left-3 glass rounded-full text-white text-xs font-bold px-3 py-1.5 flex items-center gap-1.5">
                                 <Sparkles size={10} className="text-saffron" /> Premium
                               </div>
+                              <button 
+                                onClick={() => handleSelectGood(null)}
+                                className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white/90 hover:text-white hover:scale-105 p-2 rounded-xl backdrop-blur-md transition-all z-20 cursor-pointer"
+                                title="Close product details"
+                              >
+                                <X size={14} />
+                              </button>
                               {!activeGood.isAvailable && (
-                                <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] flex items-center justify-center">
+                                <div className="absolute inset-0 bg-black/50 backdrop-blur-[2px] flex items-center justify-center z-10">
                                   <div className="border-2 border-red-500 text-red-500 font-bold uppercase tracking-widest px-6 py-2 rotate-[-15deg] text-xl rounded">Out of Stock</div>
                                 </div>
                               )}
@@ -195,28 +208,57 @@ export default function Categories() {
                             <p className="text-white/50 text-sm leading-relaxed mb-5">{activeGood.description}</p>
                           </div>
                           <div className="glass-card p-4 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-3 mt-3">
-                            <div>
+                            <div className="flex flex-col gap-0.5 shrink-0">
                               <span className="text-[10px] text-white/30 font-semibold block">Same-Day Site Delivery</span>
                               <span className="text-xs font-bold text-white/70">Brand Yard Sourced</span>
                             </div>
-                            <button 
-                              disabled={!activeGood.isAvailable}
-                              onClick={() => {
-                                if (activeGood.isAvailable && activeCategory) {
-                                  addToCart(activeCategory.id, activeCategory.name, activeGood);
-                                  setAddedToCart(activeGood.id);
-                                  setTimeout(() => setAddedToCart(null), 1500);
-                                }
-                              }}
-                              className={`w-full sm:w-auto font-bold p-3 rounded-xl transition-all flex items-center justify-center gap-2 text-sm shadow-lg ${
-                                addedToCart === activeGood.id
-                                  ? 'bg-green-500 text-white shadow-green-500/20 cursor-default'
+                            <div className="flex items-center gap-3 w-full sm:w-auto">
+                              {/* Quantity Selector */}
+                              <div className="flex items-center bg-white/5 border border-white/10 rounded-xl p-1 shrink-0">
+                                <button 
+                                  onClick={() => setProductQuantity(prev => Math.max(1, prev - 1))}
+                                  className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 hover:text-white text-white/60 flex items-center justify-center transition-colors cursor-pointer"
+                                  title="Decrease quantity"
+                                >
+                                  <Minus size={12} />
+                                </button>
+                                <span className="text-white text-sm font-bold w-8 text-center select-none">
+                                  {productQuantity}
+                                </span>
+                                <button 
+                                  onClick={() => setProductQuantity(prev => prev + 1)}
+                                  className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 hover:text-white text-white/60 flex items-center justify-center transition-colors cursor-pointer"
+                                  title="Increase quantity"
+                                >
+                                  <Plus size={12} />
+                                </button>
+                              </div>
+
+                              <button 
+                                disabled={!activeGood.isAvailable}
+                                onClick={() => {
+                                  if (activeGood.isAvailable && activeCategory) {
+                                    addToCart(activeCategory.id, activeCategory.name, activeGood, productQuantity);
+                                    setAddedToCart(activeGood.id);
+                                    setTimeout(() => setAddedToCart(null), 1500);
+                                  }
+                                }}
+                                className={`flex-1 sm:flex-none font-bold py-3 px-5 rounded-xl transition-all flex items-center justify-center gap-2 text-sm shadow-lg shrink-0 ${
+                                  addedToCart === activeGood.id
+                                    ? 'bg-green-500 text-white shadow-green-500/20 cursor-default'
+                                    : activeGood.isAvailable 
+                                      ? 'bg-gradient-to-r from-saffron to-gold text-navy shadow-saffron/20 hover:shadow-saffron/30 cursor-pointer' 
+                                      : 'bg-white/10 text-white/30 cursor-not-allowed shadow-none'
+                                }`}>
+                                <ShoppingCart size={14} />
+                                {addedToCart === activeGood.id 
+                                  ? 'Added!' 
                                   : activeGood.isAvailable 
-                                    ? 'bg-gradient-to-r from-saffron to-gold text-navy shadow-saffron/20 hover:shadow-saffron/30 cursor-pointer' 
-                                    : 'bg-white/10 text-white/30 cursor-not-allowed shadow-none'
-                              }`}>
-                              <ShoppingCart size={14} /> {addedToCart === activeGood.id ? 'Added!' : activeGood.isAvailable ? 'Add to Cart' : 'Out of Stock'}
-                            </button>
+                                    ? `Add ${productQuantity > 1 ? `(${productQuantity})` : ''} to Cart` 
+                                    : 'Out of Stock'
+                                }
+                              </button>
+                            </div>
                           </div>
                         </motion.div>
                       ) : (
@@ -230,20 +272,11 @@ export default function Categories() {
                   </div>
                 </div>
 
-                {/* Modal Footer */}
-                <div className="p-5 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-3">
+                 {/* Modal Footer */}
+                <div className="p-5 border-t border-white/5 flex justify-center items-center">
                   <div className="flex items-center gap-2 text-xs text-white/30 font-medium">
                     <Shield size={14} className="text-accent-green" />
                     All products sourced from verified authorized brand yards.
-                  </div>
-                  <div className="flex gap-3 w-full sm:w-auto">
-                    <button onClick={() => { setSelectedCategory(null); setSelectedGood(null); }}
-                      className="flex-1 sm:flex-none border border-white/10 hover:bg-white/5 text-white/60 font-bold px-5 py-2.5 rounded-xl text-sm transition-all cursor-pointer">
-                      Close
-                    </button>
-                    <button className="flex-1 sm:flex-none bg-gradient-to-r from-saffron to-gold text-navy font-bold px-6 py-2.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-saffron/20 cursor-pointer">
-                      Request Quote <ArrowRight size={14} />
-                    </button>
                   </div>
                 </div>
               </motion.div>

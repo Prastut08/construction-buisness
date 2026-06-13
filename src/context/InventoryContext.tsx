@@ -1,7 +1,19 @@
 "use client";
 
-import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect, useCallback } from "react";
 import { Layers, Building, LayoutGrid, Droplets, Zap, Paintbrush, Lock, TreePine } from "lucide-react";
+import {
+  subscribeToCategoriesRealtime,
+  saveCategory,
+  deleteCategory as firestoreDeleteCategory,
+  addGoodToCategory,
+  updateGoodInCategory,
+  removeGoodFromCategory,
+  seedInitialDataIfEmpty,
+  updateCategoryNameInFirestore,
+  type FirestoreCategory,
+  type FirestoreGood,
+} from "@/lib/firestore";
 
 export interface Brand {
   name: string;
@@ -16,6 +28,7 @@ export interface GoodType {
   image: string;
   description: string;
   isAvailable: boolean;
+  quantity?: number;
 }
 
 export interface CartItem {
@@ -180,15 +193,18 @@ interface InventoryContextType {
   isOwner: boolean;
   cart: CartItem[];
   cartCount: number;
+  isLoading: boolean;
+  isSyncing: boolean;
   loginOwner: (password: string) => boolean;
   logoutOwner: () => void;
   addCategory: (category: Omit<CategoryData, "id">) => void;
   removeCategory: (id: string) => void;
+  updateCategoryName: (id: string, newName: string) => void;
   addGood: (categoryId: string, good: Omit<GoodType, "id">) => void;
   updateGood: (categoryId: string, goodId: string, updates: Partial<GoodType>) => void;
   removeGood: (categoryId: string, goodId: string) => void;
   toggleAvailability: (categoryId: string, goodId: string) => void;
-  addToCart: (categoryId: string, categoryName: string, good: GoodType) => void;
+  addToCart: (categoryId: string, categoryName: string, good: GoodType, quantity?: number) => void;
   removeFromCart: (goodId: string) => void;
   updateCartQuantity: (goodId: string, quantity: number) => void;
   clearCart: () => void;
@@ -197,20 +213,56 @@ interface InventoryContextType {
 const InventoryContext = createContext<InventoryContextType | undefined>(undefined);
 
 export function InventoryProvider({ children }: { children: React.ReactNode }) {
-  const [categories, setCategories] = useState<CategoryData[]>(initialCategories);
+  const [categories, setCategories] = useState<CategoryData[]>([]);
   const [isOwner, setIsOwner] = useState(false);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
 
+  // ─── Firestore Real-Time Sync ─────────────────────────────────────────────
   useEffect(() => {
-    const savedCategories = localStorage.getItem("kushal-categories-v2");
-    if (savedCategories) {
-      setCategories(JSON.parse(savedCategories));
-    } else {
-      setCategories(initialCategories);
-      localStorage.setItem("kushal-categories-v2", JSON.stringify(initialCategories));
-    }
-    
+    let unsubscribe: (() => void) | null = null;
+
+    const initFirestore = async () => {
+      try {
+        // Seed Firestore with initial data if it's empty
+        await seedInitialDataIfEmpty(initialCategories as FirestoreCategory[]);
+
+        // Subscribe to real-time updates from Firestore
+        unsubscribe = subscribeToCategoriesRealtime(
+          (firestoreCategories) => {
+            setCategories(firestoreCategories as CategoryData[]);
+            setIsLoading(false);
+          },
+          (error) => {
+            console.error("Firestore sync error, falling back to local data:", error);
+            // Fallback: load from localStorage if Firestore fails
+            const savedCategories = localStorage.getItem("kushal-categories-v2");
+            if (savedCategories) {
+              setCategories(JSON.parse(savedCategories));
+            } else {
+              setCategories(initialCategories);
+            }
+            setIsLoading(false);
+          }
+        );
+      } catch (error) {
+        console.error("Failed to initialize Firestore:", error);
+        // Fallback to localStorage
+        const savedCategories = localStorage.getItem("kushal-categories-v2");
+        if (savedCategories) {
+          setCategories(JSON.parse(savedCategories));
+        } else {
+          setCategories(initialCategories);
+        }
+        setIsLoading(false);
+      }
+    };
+
+    initFirestore();
+
+    // Load owner state and cart from localStorage (these stay local)
     const savedOwnerState = localStorage.getItem("kushal-is-owner-v2");
     if (savedOwnerState === "true") {
       setIsOwner(true);
@@ -221,19 +273,26 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
       setCart(JSON.parse(savedCart));
     }
     setIsLoaded(true);
+
+    return () => {
+      if (unsubscribe) unsubscribe();
+    };
   }, []);
 
+  // Keep localStorage in sync as a backup cache
   useEffect(() => {
-    if (isLoaded) {
+    if (!isLoading && categories.length > 0) {
       localStorage.setItem("kushal-categories-v2", JSON.stringify(categories));
     }
-  }, [categories, isLoaded]);
+  }, [categories, isLoading]);
 
   useEffect(() => {
     if (isLoaded) {
       localStorage.setItem("kushal-cart", JSON.stringify(cart));
     }
   }, [cart, isLoaded]);
+
+  // ─── Auth ─────────────────────────────────────────────────────────────────
 
   const loginOwner = (password: string) => {
     if (password === "Prastut@08") {
@@ -249,53 +308,158 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     localStorage.removeItem("kushal-is-owner-v2");
   };
 
-  const addCategory = (category: Omit<CategoryData, "id">) => {
-    setCategories([...categories, { ...category, id: generateId() }]);
-  };
+  // ─── Category CRUD (writes to Firestore) ──────────────────────────────────
 
-  const removeCategory = (id: string) => {
-    setCategories(categories.filter(c => c.id !== id));
-  };
+  const addCategory = useCallback(async (category: Omit<CategoryData, "id">) => {
+    const newId = generateId();
+    const newCategory: CategoryData = { ...category, id: newId };
+    
+    // Optimistic update
+    setCategories(prev => [...prev, newCategory]);
+    
+    try {
+      setIsSyncing(true);
+      await saveCategory({
+        ...newCategory,
+        typesOfGoods: newCategory.typesOfGoods as FirestoreGood[],
+        createdAt: Date.now(),
+      });
+    } catch (error: any) {
+      console.error("Failed to save category to Firestore:", error);
+      alert("Failed to save category: " + (error?.message || error));
+      // The real-time listener will correct state if needed
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
 
-  const addGood = (categoryId: string, good: Omit<GoodType, "id">) => {
-    setCategories(categories.map(c => 
-      c.id === categoryId 
-        ? { ...c, typesOfGoods: [...c.typesOfGoods, { ...good, id: generateId() }] }
+  const removeCategory = useCallback(async (id: string) => {
+    // Optimistic update
+    setCategories(prev => prev.filter(c => c.id !== id));
+    
+    try {
+      setIsSyncing(true);
+      await firestoreDeleteCategory(id);
+    } catch (error: any) {
+      console.error("Failed to delete category from Firestore:", error);
+      alert("Failed to delete category: " + (error?.message || error));
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
+
+  const updateCategoryName = useCallback(async (id: string, newName: string) => {
+    // Optimistic update
+    setCategories(prev => prev.map(c =>
+      c.id === id ? { ...c, name: newName } : c
+    ));
+    try {
+      setIsSyncing(true);
+      await updateCategoryNameInFirestore(id, newName);
+    } catch (error: any) {
+      console.error("Failed to update category name in Firestore:", error);
+      alert("Failed to rename category: " + (error?.message || error));
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
+
+  // ─── Goods/Products CRUD (writes to Firestore) ───────────────────────────
+
+  const addGood = useCallback(async (categoryId: string, good: Omit<GoodType, "id">) => {
+    const newGood: GoodType = { ...good, id: generateId() };
+    
+    // Optimistic update
+    setCategories(prev => prev.map(c =>
+      c.id === categoryId
+        ? { ...c, typesOfGoods: [...c.typesOfGoods, newGood] }
         : c
     ));
-  };
 
-  const updateGood = (categoryId: string, goodId: string, updates: Partial<GoodType>) => {
-    setCategories(categories.map(c => 
-      c.id === categoryId 
+    try {
+      setIsSyncing(true);
+      await addGoodToCategory(categoryId, newGood as FirestoreGood);
+    } catch (error: any) {
+      console.error("Failed to add good to Firestore:", error);
+      alert("Failed to add product: " + (error?.message || error));
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
+
+  const updateGood = useCallback(async (categoryId: string, goodId: string, updates: Partial<GoodType>) => {
+    // Optimistic update
+    setCategories(prev => prev.map(c =>
+      c.id === categoryId
         ? { ...c, typesOfGoods: c.typesOfGoods.map(g => g.id === goodId ? { ...g, ...updates } : g) }
         : c
     ));
-  };
 
-  const removeGood = (categoryId: string, goodId: string) => {
-    setCategories(categories.map(c => 
-      c.id === categoryId 
+    try {
+      setIsSyncing(true);
+      await updateGoodInCategory(categoryId, goodId, updates as Partial<FirestoreGood>);
+    } catch (error: any) {
+      console.error("Failed to update good in Firestore:", error);
+      alert("Failed to update product: " + (error?.message || error));
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
+
+  const removeGood = useCallback(async (categoryId: string, goodId: string) => {
+    // Optimistic update
+    setCategories(prev => prev.map(c =>
+      c.id === categoryId
         ? { ...c, typesOfGoods: c.typesOfGoods.filter(g => g.id !== goodId) }
         : c
     ));
-  };
 
-  const toggleAvailability = (categoryId: string, goodId: string) => {
-    setCategories(categories.map(c => 
-      c.id === categoryId 
-        ? { ...c, typesOfGoods: c.typesOfGoods.map(g => g.id === goodId ? { ...g, isAvailable: !g.isAvailable } : g) }
+    try {
+      setIsSyncing(true);
+      await removeGoodFromCategory(categoryId, goodId);
+    } catch (error: any) {
+      console.error("Failed to remove good from Firestore:", error);
+      alert("Failed to remove product: " + (error?.message || error));
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
+
+  const toggleAvailability = useCallback(async (categoryId: string, goodId: string) => {
+    // Find current state
+    const category = categories.find(c => c.id === categoryId);
+    const good = category?.typesOfGoods.find(g => g.id === goodId);
+    if (!good) return;
+
+    const newAvailability = !good.isAvailable;
+
+    // Optimistic update
+    setCategories(prev => prev.map(c =>
+      c.id === categoryId
+        ? { ...c, typesOfGoods: c.typesOfGoods.map(g => g.id === goodId ? { ...g, isAvailable: newAvailability } : g) }
         : c
     ));
-  };
 
-  const addToCart = (categoryId: string, categoryName: string, good: GoodType) => {
+    try {
+      setIsSyncing(true);
+      await updateGoodInCategory(categoryId, goodId, { isAvailable: newAvailability });
+    } catch (error: any) {
+      console.error("Failed to toggle availability in Firestore:", error);
+      alert("Failed to toggle availability: " + (error?.message || error));
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [categories]);
+
+  // ─── Cart (stays in localStorage, per-user/session) ──────────────────────
+
+  const addToCart = (categoryId: string, categoryName: string, good: GoodType, quantity: number = 1) => {
     setCart(prev => {
       const existing = prev.find(item => item.goodId === good.id);
       if (existing) {
         return prev.map(item =>
           item.goodId === good.id
-            ? { ...item, quantity: item.quantity + 1 }
+            ? { ...item, quantity: item.quantity + quantity }
             : item
         );
       }
@@ -306,7 +470,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
         name: good.name,
         price: good.price,
         image: good.image,
-        quantity: 1
+        quantity
       }];
     });
   };
@@ -333,8 +497,8 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <InventoryContext.Provider value={{
-      categories, isOwner, cart, cartCount, loginOwner, logoutOwner,
-      addCategory, removeCategory, addGood, updateGood, removeGood, toggleAvailability,
+      categories, isOwner, cart, cartCount, isLoading, isSyncing, loginOwner, logoutOwner,
+      addCategory, removeCategory, updateCategoryName, addGood, updateGood, removeGood, toggleAvailability,
       addToCart, removeFromCart, updateCartQuantity, clearCart
     }}>
       {children}

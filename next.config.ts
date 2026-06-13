@@ -2,6 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  turbopack: {
+    root: import.meta.dirname,
+  },
   images: {
     remotePatterns: [
       {
@@ -15,3 +18,4 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
+

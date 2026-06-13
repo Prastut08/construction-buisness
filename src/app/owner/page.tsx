@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useInventory } from "@/context/InventoryContext";
-import { Plus, Trash2, Edit2, Check, X, ShieldAlert, Pencil } from "lucide-react";
+import { Plus, Trash2, Edit2, Check, X, ShieldAlert, Pencil, Building2 } from "lucide-react";
 import Link from "next/link";
 import Header from "@/components/Header";
 
@@ -18,6 +18,9 @@ export default function OwnerDashboard() {
     updateGood,
     removeGood,
     toggleAvailability,
+    addBrand,
+    updateBrand,
+    removeBrand,
   } = useInventory();
 
   const router = useRouter();
@@ -30,6 +33,12 @@ export default function OwnerDashboard() {
   // Inline editing state for category name
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [editCategoryName, setEditCategoryName] = useState("");
+
+  // Brand Partners state
+  const [addingBrandCatId, setAddingBrandCatId] = useState<string | null>(null);
+  const [newBrand, setNewBrand] = useState({ name: "", description: "", popularity: "" });
+  const [editingBrand, setEditingBrand] = useState<{ catId: string; originalName: string } | null>(null);
+  const [editBrandForm, setEditBrandForm] = useState({ name: "", description: "", popularity: "" });
 
   useEffect(() => {
     setMounted(true);
@@ -127,6 +136,40 @@ export default function OwnerDashboard() {
   const handleDeleteGood = (categoryId: string, goodId: string, goodName: string) => {
     if (confirm(`Delete product "${goodName}"?`)) {
       removeGood(categoryId, goodId);
+    }
+  };
+
+  // ─── Brand Handlers ──────────────────────────────────────────
+
+  const handleAddBrand = (categoryId: string) => {
+    if (!newBrand.name.trim()) return;
+    addBrand(categoryId, {
+      name: newBrand.name.trim(),
+      description: newBrand.description.trim(),
+      popularity: newBrand.popularity.trim(),
+    });
+    setNewBrand({ name: "", description: "", popularity: "" });
+    setAddingBrandCatId(null);
+  };
+
+  const startEditingBrand = (catId: string, brand: { name: string; description: string; popularity: string }) => {
+    setEditingBrand({ catId, originalName: brand.name });
+    setEditBrandForm({ name: brand.name, description: brand.description, popularity: brand.popularity });
+  };
+
+  const saveEditingBrand = () => {
+    if (!editingBrand || !editBrandForm.name.trim()) return;
+    updateBrand(editingBrand.catId, editingBrand.originalName, {
+      name: editBrandForm.name.trim(),
+      description: editBrandForm.description.trim(),
+      popularity: editBrandForm.popularity.trim(),
+    });
+    setEditingBrand(null);
+  };
+
+  const handleDeleteBrand = (categoryId: string, brandName: string) => {
+    if (confirm(`Remove brand "${brandName}"?`)) {
+      removeBrand(categoryId, brandName);
     }
   };
 
@@ -310,6 +353,158 @@ export default function OwnerDashboard() {
                   ))}
                 </div>
               )}
+
+              {/* ── Brand Partners Section ─────────────────────────────── */}
+              <div className="mt-8 pt-6 border-t border-white/10">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-base font-rajdhani font-bold text-white flex items-center gap-2">
+                    <Building2 size={16} className="text-saffron" /> Brand Partners
+                    <span className="text-xs text-white/30 font-normal ml-1">({category.brands.length})</span>
+                  </h3>
+                  {addingBrandCatId !== category.id && (
+                    <button
+                      onClick={() => { setAddingBrandCatId(category.id); setNewBrand({ name: "", description: "", popularity: "" }); }}
+                      className="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-xs transition-colors"
+                    >
+                      <Plus size={13} /> Add Brand
+                    </button>
+                  )}
+                </div>
+
+                {/* Add Brand Form */}
+                {addingBrandCatId === category.id && (
+                  <div className="bg-surface border border-saffron/20 rounded-xl p-4 mb-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                    <div className="flex flex-col gap-1">
+                      <label className="text-white/40 text-[10px] font-semibold uppercase tracking-wider">Brand Name *</label>
+                      <input
+                        type="text"
+                        value={newBrand.name}
+                        onChange={(e) => setNewBrand({ ...newBrand, name: e.target.value })}
+                        placeholder="e.g. UltraTech"
+                        className="bg-navy border border-white/10 focus:border-saffron/50 rounded-lg px-3 py-2 text-white text-sm outline-none transition-colors"
+                        autoFocus
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-white/40 text-[10px] font-semibold uppercase tracking-wider">Tagline / Description</label>
+                      <input
+                        type="text"
+                        value={newBrand.description}
+                        onChange={(e) => setNewBrand({ ...newBrand, description: e.target.value })}
+                        placeholder="e.g. The Engineer's Choice"
+                        className="bg-navy border border-white/10 focus:border-saffron/50 rounded-lg px-3 py-2 text-white text-sm outline-none transition-colors"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <label className="text-white/40 text-[10px] font-semibold uppercase tracking-wider">Popularity Label</label>
+                      <input
+                        type="text"
+                        value={newBrand.popularity}
+                        onChange={(e) => setNewBrand({ ...newBrand, popularity: e.target.value })}
+                        placeholder="e.g. Market Leader"
+                        className="bg-navy border border-white/10 focus:border-saffron/50 rounded-lg px-3 py-2 text-white text-sm outline-none transition-colors"
+                      />
+                    </div>
+                    <div className="sm:col-span-3 flex gap-2 pt-1">
+                      <button
+                        onClick={() => handleAddBrand(category.id)}
+                        disabled={!newBrand.name.trim()}
+                        className="bg-saffron hover:bg-amber-400 disabled:opacity-40 disabled:cursor-not-allowed text-navy font-bold px-4 py-2 rounded-lg text-sm flex items-center gap-1.5 transition-colors"
+                      >
+                        <Check size={14} /> Save Brand
+                      </button>
+                      <button
+                        onClick={() => setAddingBrandCatId(null)}
+                        className="bg-white/10 hover:bg-white/20 text-white px-4 py-2 rounded-lg text-sm flex items-center gap-1.5 transition-colors"
+                      >
+                        <X size={14} /> Cancel
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Brand List */}
+                {category.brands.length === 0 && addingBrandCatId !== category.id ? (
+                  <p className="text-white/25 text-xs italic">No brand partners yet. Click "Add Brand" to add one.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {category.brands.map((brand) => (
+                      <div key={brand.name} className="bg-surface border border-white/5 rounded-xl p-3">
+                        {editingBrand?.catId === category.id && editingBrand.originalName === brand.name ? (
+                          /* Brand Edit Form */
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div className="flex flex-col gap-1">
+                              <label className="text-white/40 text-[10px] font-semibold uppercase tracking-wider">Brand Name *</label>
+                              <input
+                                type="text"
+                                value={editBrandForm.name}
+                                onChange={(e) => setEditBrandForm({ ...editBrandForm, name: e.target.value })}
+                                className="bg-navy border border-white/10 focus:border-saffron/50 rounded-lg px-3 py-2 text-white text-sm outline-none"
+                                autoFocus
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-white/40 text-[10px] font-semibold uppercase tracking-wider">Tagline</label>
+                              <input
+                                type="text"
+                                value={editBrandForm.description}
+                                onChange={(e) => setEditBrandForm({ ...editBrandForm, description: e.target.value })}
+                                className="bg-navy border border-white/10 focus:border-saffron/50 rounded-lg px-3 py-2 text-white text-sm outline-none"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1">
+                              <label className="text-white/40 text-[10px] font-semibold uppercase tracking-wider">Popularity</label>
+                              <input
+                                type="text"
+                                value={editBrandForm.popularity}
+                                onChange={(e) => setEditBrandForm({ ...editBrandForm, popularity: e.target.value })}
+                                className="bg-navy border border-white/10 focus:border-saffron/50 rounded-lg px-3 py-2 text-white text-sm outline-none"
+                              />
+                            </div>
+                            <div className="sm:col-span-3 flex gap-2">
+                              <button onClick={saveEditingBrand} className="bg-green-500/20 hover:bg-green-500/40 text-green-400 px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors">
+                                <Check size={12} /> Save
+                              </button>
+                              <button onClick={() => setEditingBrand(null)} className="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg text-xs flex items-center gap-1 transition-colors">
+                                <X size={12} /> Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          /* Brand View */
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="text-white font-bold text-sm truncate">{brand.name}</p>
+                              <p className="text-white/40 text-xs truncate">{brand.description}</p>
+                              {brand.popularity && (
+                                <span className="inline-block mt-1 text-[10px] bg-saffron/15 text-saffron font-bold px-2 py-0.5 rounded-full">
+                                  {brand.popularity}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex gap-2 shrink-0">
+                              <button
+                                onClick={() => startEditingBrand(category.id, brand)}
+                                className="bg-white/5 hover:bg-white/15 text-white/70 p-1.5 rounded-lg transition-colors"
+                                title="Edit brand"
+                              >
+                                <Pencil size={13} />
+                              </button>
+                              <button
+                                onClick={() => handleDeleteBrand(category.id, brand.name)}
+                                className="bg-red-500/10 hover:bg-red-500/25 text-red-400 p-1.5 rounded-lg transition-colors"
+                                title="Remove brand"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>

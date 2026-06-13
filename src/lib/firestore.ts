@@ -274,6 +274,27 @@ export async function removeBrandFromCategory(
   await updateDoc(docRef, { brands: filtered });
 }
 
+/**
+ * Update a brand inside a category (matched by original name).
+ */
+export async function updateBrandInCategory(
+  categoryId: string,
+  originalName: string,
+  updated: FirestoreBrand
+): Promise<void> {
+  const docRef = doc(db, CATEGORIES_COLLECTION, categoryId);
+  const docSnap = await getDoc(docRef);
+
+  if (!docSnap.exists()) throw new Error(`Category ${categoryId} not found`);
+
+  const existing: FirestoreBrand[] = docSnap.data().brands || [];
+  const updatedBrands = existing.map((b) =>
+    b.name === originalName ? updated : b
+  );
+
+  await updateDoc(docRef, { brands: updatedBrands });
+}
+
 // ─── Seed: Initial Data ─────────────────────────────────────────────────────
 
 /**

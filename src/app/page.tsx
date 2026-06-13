@@ -2,7 +2,6 @@ import Header from "@/components/Header";
 import Hero from "@/components/Hero";
 import TrustBadges from "@/components/TrustBadges";
 import Categories from "@/components/Categories";
-import FeaturedProducts from "@/components/FeaturedProducts";
 import Testimonials from "@/components/Testimonials";
 import ProBanner from "@/components/ProBanner";
 import Footer from "@/components/Footer";
@@ -19,7 +18,6 @@ export default function Home() {
         <Hero />
         <TrustBadges />
         <Categories />
-        <FeaturedProducts />
         <Testimonials />
         <ProBanner />
       </main>

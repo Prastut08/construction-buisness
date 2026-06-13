@@ -9,10 +9,14 @@ import {
   addGoodToCategory,
   updateGoodInCategory,
   removeGoodFromCategory,
+  addBrandToCategory,
+  updateBrandInCategory,
+  removeBrandFromCategory,
   seedInitialDataIfEmpty,
   updateCategoryNameInFirestore,
   type FirestoreCategory,
   type FirestoreGood,
+  type FirestoreBrand,
 } from "@/lib/firestore";
 
 export interface Brand {
@@ -204,6 +208,9 @@ interface InventoryContextType {
   updateGood: (categoryId: string, goodId: string, updates: Partial<GoodType>) => void;
   removeGood: (categoryId: string, goodId: string) => void;
   toggleAvailability: (categoryId: string, goodId: string) => void;
+  addBrand: (categoryId: string, brand: Brand) => void;
+  updateBrand: (categoryId: string, originalName: string, updated: Brand) => void;
+  removeBrand: (categoryId: string, brandName: string) => void;
   addToCart: (categoryId: string, categoryName: string, good: GoodType, quantity?: number) => void;
   removeFromCart: (goodId: string) => void;
   updateCartQuantity: (goodId: string, quantity: number) => void;
@@ -451,6 +458,55 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     }
   }, [categories]);
 
+  // ─── Brand CRUD (writes to Firestore) ────────────────────────────────────
+
+  const addBrand = useCallback(async (categoryId: string, brand: Brand) => {
+    setCategories(prev => prev.map(c =>
+      c.id === categoryId ? { ...c, brands: [...c.brands, brand] } : c
+    ));
+    try {
+      setIsSyncing(true);
+      await addBrandToCategory(categoryId, brand as FirestoreBrand);
+    } catch (error: any) {
+      console.error("Failed to add brand:", error);
+      alert("Failed to add brand: " + (error?.message || error));
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
+
+  const updateBrand = useCallback(async (categoryId: string, originalName: string, updated: Brand) => {
+    setCategories(prev => prev.map(c =>
+      c.id === categoryId
+        ? { ...c, brands: c.brands.map(b => b.name === originalName ? updated : b) }
+        : c
+    ));
+    try {
+      setIsSyncing(true);
+      await updateBrandInCategory(categoryId, originalName, updated as FirestoreBrand);
+    } catch (error: any) {
+      console.error("Failed to update brand:", error);
+      alert("Failed to update brand: " + (error?.message || error));
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
+
+  const removeBrand = useCallback(async (categoryId: string, brandName: string) => {
+    setCategories(prev => prev.map(c =>
+      c.id === categoryId ? { ...c, brands: c.brands.filter(b => b.name !== brandName) } : c
+    ));
+    try {
+      setIsSyncing(true);
+      await removeBrandFromCategory(categoryId, brandName);
+    } catch (error: any) {
+      console.error("Failed to remove brand:", error);
+      alert("Failed to remove brand: " + (error?.message || error));
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
+
   // ─── Cart (stays in localStorage, per-user/session) ──────────────────────
 
   const addToCart = (categoryId: string, categoryName: string, good: GoodType, quantity: number = 1) => {
@@ -499,6 +555,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     <InventoryContext.Provider value={{
       categories, isOwner, cart, cartCount, isLoading, isSyncing, loginOwner, logoutOwner,
       addCategory, removeCategory, updateCategoryName, addGood, updateGood, removeGood, toggleAvailability,
+      addBrand, updateBrand, removeBrand,
       addToCart, removeFromCart, updateCartQuantity, clearCart
     }}>
       {children}

@@ -83,7 +83,7 @@ export default function Footer() {
               </button>
             </form>
             <div className="space-y-2 text-xs text-white/30">
-              <div className="flex items-center gap-2"><Phone size={12} className="text-saffron/50" /> +91 98765 43210</div>
+              <div className="flex items-center gap-2"><Phone size={12} className="text-saffron/50" /> +91 90641 13345</div>
               <div className="flex items-center gap-2"><Mail size={12} className="text-saffron/50" /> info@kushalenterprises.com</div>
               <div className="flex items-center gap-2"><MapPin size={12} className="text-saffron/50" /> Mumbai, Maharashtra</div>
             </div>

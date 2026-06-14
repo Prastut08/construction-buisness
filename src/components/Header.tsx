@@ -51,7 +51,7 @@ export default function Header() {
         <div className="container mx-auto flex justify-between items-center max-w-7xl">
           <div className="flex items-center space-x-6">
             <span className="flex items-center gap-2 hover:text-saffron transition-colors cursor-pointer">
-              <Phone size={12} className="text-saffron" /> +91 98765 43210
+              <Phone size={12} className="text-saffron" /> +91 90641 13345
             </span>
             <span className="flex items-center gap-2 hover:text-saffron transition-colors cursor-pointer">
               <MapPin size={12} className="text-saffron" /> Deliver to: 400001 Mumbai
@@ -253,7 +253,7 @@ export default function Header() {
                               Clear Cart
                             </button>
                             <a
-                              href={`https://wa.me/919876543210?text=${encodeURIComponent(
+                              href={`https://wa.me/919064113345?text=${encodeURIComponent(
                                 `Hello Kushal Enterprises! 👋\n\nI'd like to place an order for the following items:\n\n` +
                                 cart.map((item, i) =>
                                   `${i + 1}. *${item.name}*\n   Qty: ${item.quantity}\n   Price: ${item.price}\n   Category: ${item.categoryName}`

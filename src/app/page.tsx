@@ -3,7 +3,7 @@ import Hero from "@/components/Hero";
 import TrustBadges from "@/components/TrustBadges";
 import Categories from "@/components/Categories";
 import Testimonials from "@/components/Testimonials";
-import ProBanner from "@/components/ProBanner";
+import HistoryAchievements from "@/components/HistoryAchievements";
 import Footer from "@/components/Footer";
 import ParticleField from "@/components/ParticleField";
 
@@ -19,13 +19,13 @@ export default function Home() {
         <TrustBadges />
         <Categories />
         <Testimonials />
-        <ProBanner />
+        <HistoryAchievements />
       </main>
       <Footer />
       
       {/* Floating WhatsApp Button */}
       <a 
-        href="https://wa.me/919876543210" 
+        href="https://wa.me/919064113345" 
         target="_blank" 
         rel="noreferrer"
         aria-label="Chat on WhatsApp"

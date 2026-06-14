@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, ShoppingCart, User, Menu, X, Heart, Phone, MapPin, Lock, Minus, Plus, Trash2 } from "lucide-react";
+import { Search, ShoppingCart, User, Menu, X, Phone, MapPin, Lock, Minus, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
@@ -180,10 +180,7 @@ export default function Header() {
                 {isOwner ? <Lock size={20} className="text-saffron" strokeWidth={1.5} /> : <User size={20} strokeWidth={1.5} />}
                 <span className="text-[9px] mt-1 font-medium">{isOwner ? "Owner" : "Owner"}</span>
               </button>
-              <button className="hidden md:flex flex-col items-center text-slate/70 hover:text-saffron transition-colors duration-200 p-2 rounded-xl hover:bg-white/5 cursor-pointer">
-                <Heart size={20} strokeWidth={1.5} />
-                <span className="text-[9px] mt-1 font-medium">Saved</span>
-              </button>
+
               <div className="relative">
                 <button 
                   onClick={() => setShowCart(!showCart)}

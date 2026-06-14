@@ -21,15 +21,56 @@ const IconMap: Record<string, React.ReactNode> = {
 };
 
 export default function Categories() {
-  const { categories, addToCart } = useInventory();
+  const { categories, addToCart, updateGood } = useInventory();
   const [selectedCategory, setSelectedCategory] = useState<CategoryData | null>(null);
   const [selectedGood, setSelectedGood] = useState<GoodType | null>(null);
   const [addedToCart, setAddedToCart] = useState<string | null>(null);
   const [productQuantity, setProductQuantity] = useState<number>(1);
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  const handleSelectGood = (good: GoodType | null) => {
+  const handleAutoGenerateImage = async (catId: string, good: GoodType) => {
+    if (isGenerating) return;
+    console.log("AI Generation: Starting for", good.name, "(ID:", good.id, ")");
+    setIsGenerating(true);
+    try {
+      console.log("AI Generation: Sending POST request to /api/generate-image...");
+      const res = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: good.name,
+          description: good.description
+        })
+      });
+      console.log("AI Generation: Received response status:", res.status);
+      if (!res.ok) throw new Error(`Server returned status ${res.status}`);
+      const data = await res.json();
+      console.log("AI Generation: Response JSON:", data);
+      if (data.imageUrl) {
+        console.log("AI Generation: Updating database with image URL:", data.imageUrl);
+        await updateGood(catId, good.id, { image: data.imageUrl });
+        console.log("AI Generation: Success!");
+      }
+    } catch (error: any) {
+      console.error("AI Generation: Failed with error:", error);
+      alert("AI Generation Error: " + (error?.message || error));
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const handleSelectGood = (good: GoodType | null, catId?: string) => {
     setSelectedGood(good);
     setProductQuantity(1);
+
+    if (good && catId) {
+      const imgUrl = good.image || "";
+      if (imgUrl.includes("unsplash.com") || !imgUrl) {
+        handleAutoGenerateImage(catId, good);
+      }
+    }
   };
 
   // When opening modal, keep the selected category reference fresh from context
@@ -132,7 +173,7 @@ export default function Categories() {
                     ) : (
                       <div className="space-y-2.5 mb-6">
                         {activeCategory.typesOfGoods.map((good, idx) => (
-                          <motion.div key={good.id} onClick={() => handleSelectGood(good)}
+                          <motion.div key={good.id} onClick={() => handleSelectGood(good, activeCategory?.id)}
                             initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: idx * 0.05 }}
                             className={`flex items-center justify-between p-4 rounded-xl cursor-pointer border transition-all group ${
                               activeGood?.id === good.id
@@ -180,14 +221,42 @@ export default function Categories() {
                         <motion.div key={activeGood.id} initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, y: -15 }} transition={{ duration: 0.3 }} className="flex flex-col h-full justify-between">
                           <div>
-                            <div className="h-56 relative rounded-2xl overflow-hidden shadow-xl border border-white/5 mb-5 bg-surface group">
-                              <Image src={activeGood.image} alt={activeGood.name} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
-                              <div className="absolute top-3 left-3 glass rounded-full text-white text-xs font-bold px-3 py-1.5 flex items-center gap-1.5">
-                                <Sparkles size={10} className="text-saffron" /> Premium
+                            <div 
+                              onClick={() => activeCategory && handleAutoGenerateImage(activeCategory.id, activeGood)}
+                              className="h-56 relative rounded-2xl overflow-hidden shadow-xl border border-white/5 mb-5 bg-surface group cursor-pointer hover:border-saffron/30 transition-all"
+                              title="Click to generate/regenerate AI image"
+                            >
+                              {activeGood.image && (
+                                <Image src={activeGood.image} alt={activeGood.name} fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover" />
+                              )}
+                              
+                              {/* Click to Regenerate Overlay on Hover */}
+                              {!isGenerating && (
+                                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1 text-white font-bold text-xs pointer-events-none z-20 backdrop-blur-[1px]">
+                                  <Sparkles size={16} className="text-saffron animate-pulse" />
+                                  <span>Click to Regenerate AI Image</span>
+                                </div>
+                              )}
+                              
+                              {/* Generating Overlay */}
+                              {isGenerating && (
+                                <div className="absolute inset-0 bg-black/75 backdrop-blur-sm flex flex-col items-center justify-center z-30">
+                                  <div className="relative w-10 h-10 mb-3">
+                                    <div className="absolute inset-0 rounded-full border-4 border-saffron/20 animate-ping" />
+                                    <div className="absolute inset-0 rounded-full border-4 border-t-saffron animate-spin" />
+                                  </div>
+                                  <span className="text-saffron text-xs font-bold uppercase tracking-wider animate-pulse">Generating AI Image...</span>
+                                </div>
+                              )}
+
+                              <div className="absolute top-3 left-3 glass rounded-full text-white text-xs font-bold px-3 py-1.5 flex items-center gap-1.5 z-10">
+                                <Sparkles size={10} className="text-saffron animate-pulse" /> {activeGood.image && (activeGood.image.includes("pollinations.ai") || activeGood.image.includes("pexels.com")) ? "Premium Photo" : "Premium"}
                               </div>
+
+
                               <button 
                                 onClick={() => handleSelectGood(null)}
-                                className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white/90 hover:text-white hover:scale-105 p-2 rounded-xl backdrop-blur-md transition-all z-20 cursor-pointer"
+                                className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white/90 hover:text-white hover:scale-105 p-2 rounded-xl backdrop-blur-md transition-all z-25 cursor-pointer"
                                 title="Close product details"
                               >
                                 <X size={14} />

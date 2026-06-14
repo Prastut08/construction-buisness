@@ -176,9 +176,9 @@ export default function Header() {
             <div className="flex items-center gap-2 md:gap-4">
               <button 
                 onClick={() => isOwner ? router.push("/owner") : setShowLogin(true)}
-                className="hidden md:flex flex-col items-center text-slate/70 hover:text-saffron transition-colors duration-200 p-2 rounded-xl hover:bg-white/5 cursor-pointer">
+                className="flex flex-col items-center text-slate/70 hover:text-saffron transition-colors duration-200 p-2 rounded-xl hover:bg-white/5 cursor-pointer">
                 {isOwner ? <Lock size={20} className="text-saffron" strokeWidth={1.5} /> : <User size={20} strokeWidth={1.5} />}
-                <span className="text-[9px] mt-1 font-medium">{isOwner ? "Owner" : "Owner"}</span>
+                <span className="text-[9px] mt-1 font-medium">Owner</span>
               </button>
 
               <div className="relative">
@@ -426,6 +426,18 @@ export default function Header() {
                   <Link href="#" className="block px-4 py-3 text-saffron font-bold hover:bg-saffron/10 rounded-xl transition-colors">
                     Bulk Orders & Quote
                   </Link>
+                </li>
+                <li className="pt-2 border-t border-white/5">
+                  <button 
+                    onClick={() => {
+                      setMobileMenuOpen(false);
+                      isOwner ? router.push("/owner") : setShowLogin(true);
+                    }}
+                    className="w-full text-left px-4 py-3 text-white/70 hover:text-saffron hover:bg-white/5 rounded-xl transition-colors flex items-center gap-2 cursor-pointer font-medium"
+                  >
+                    {isOwner ? <Lock size={15} className="text-saffron" /> : <User size={15} />}
+                    <span>{isOwner ? "Owner Dashboard" : "Owner Login"}</span>
+                  </button>
                 </li>
               </ul>
             </div>

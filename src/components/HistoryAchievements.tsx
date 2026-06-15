@@ -1,7 +1,8 @@
 "use client";
 
-import { motion } from "framer-motion";
-import { Trophy, Calendar, Award, TrendingUp, Users, ShieldCheck, MapPin } from "lucide-react";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Trophy, Calendar, Award, TrendingUp, Users, ShieldCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
 
 const stats = [
@@ -15,30 +16,56 @@ const timeline = [
   {
     year: "2016",
     title: "The Foundation",
-    description: "Kushal Enterprises was founded as a boutique cement and brick distributor, serving local contractors in Mumbai.",
-    icon: Calendar,
+    description: "Kushal Enterprises was founded as a boutique cement and brick distributor, serving local contractors in Baghmundi, West Bengal.",
   },
   {
     year: "2019",
     title: "TMT Steel & Heavy Infra",
     description: "Expanded our catalog to include premium grade TMT steel bars and heavy-duty structural reinforcement materials.",
-    icon: Award,
   },
   {
     year: "2022",
     title: "Tiles, Finishes & Premium Yards",
     description: "Opened state-of-the-art marble, tiling, and interior finishes yards, supplying luxury architectural projects.",
-    icon: Trophy,
   },
   {
     year: "2026",
     title: "Digital Integration",
     description: "Launched real-time online cataloging, digital wholesale pricing engines, and coordinated same-day delivery hubs.",
-    icon: TrendingUp,
   },
 ];
 
+const galleryImages = [
+  { src: "/achievements/achievement-4.jpeg", title: "Infrastructure Development Supply" },
+  { src: "/achievements/achievement-5.jpeg", title: "Premium Yard Construction" },
+  { src: "/achievements/achievement-6.jpeg", title: "Concrete Slabs & Masonry Work" },
+  { src: "/achievements/achievement-9.jpeg", title: "Pillar Casting & Reinforcement" },
+  { src: "/achievements/achievement-10.jpeg", title: "Major Building Frame Dispatch" },
+];
+
 export default function HistoryAchievements() {
+  const [currentSlide, setCurrentSlide] = useState(0);
+
+  // Auto-play slideshow every 3.5 seconds
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentSlide((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1));
+    }, 3500);
+    return () => clearInterval(timer);
+  }, []);
+
+  const prevSlide = () => {
+    if (galleryImages.length === 0) return;
+    setCurrentSlide((prev) => (prev <= 0 ? galleryImages.length - 1 : prev - 1));
+  };
+
+  const nextSlide = () => {
+    if (galleryImages.length === 0) return;
+    setCurrentSlide((prev) => (prev >= galleryImages.length - 1 ? 0 : prev + 1));
+  };
+
+  const activeSlide = galleryImages[currentSlide] || galleryImages[0] || { src: "", title: "" };
+
   return (
     <section className="py-24 relative overflow-hidden bg-navy-medium/30">
       {/* Background elements */}
@@ -79,7 +106,7 @@ export default function HistoryAchievements() {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-20">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
           {stats.map((stat, idx) => {
             const Icon = stat.icon;
             return (
@@ -105,54 +132,123 @@ export default function HistoryAchievements() {
           })}
         </div>
 
-        {/* Timeline Section */}
+        {/* Timeline & Slideshow Container */}
         <div className="relative rounded-3xl overflow-hidden border border-white/5 bg-surface-light/30 backdrop-blur-md p-8 md:p-12">
           {/* Subtle construction photo background */}
-          <div className="absolute inset-0 opacity-10">
+          <div className="absolute inset-0 opacity-5">
             <Image 
-              src="https://images.pexels.com/photos/5623179/pexels-photo-5623179.jpeg?auto=compress&cs=tinysrgb&h=650&w=940" 
+              src="/achievements/achievement-4.jpeg" 
               alt="Construction background" 
               fill 
               className="object-cover"
               sizes="100vw"
             />
-            <div className="absolute inset-0 bg-navy/90" />
+            <div className="absolute inset-0 bg-navy/95" />
           </div>
 
           <div className="relative z-10">
-            <h3 className="text-2xl font-rajdhani font-bold text-white mb-10 border-b border-white/5 pb-4 flex items-center gap-3">
-              <Calendar className="text-saffron" size={20} /> The Journey Timeline
-            </h3>
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
+              
+              {/* Left Column: Vertical Timeline (6 cols on desktop) */}
+              <div className="lg:col-span-6 relative">
+                <h3 className="text-2xl font-rajdhani font-bold text-white mb-8 border-b border-white/5 pb-4 flex items-center gap-3">
+                  <Calendar className="text-saffron" size={20} /> Our Journey Timeline
+                </h3>
+                
+                <div className="relative pl-8 space-y-8">
+                  {/* Vertical line connector */}
+                  <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-gradient-to-b from-saffron via-saffron/40 to-saffron/10" />
+                  
+                  {timeline.map((item, idx) => (
+                    <motion.div 
+                      key={item.year}
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: true }}
+                      transition={{ delay: idx * 0.1 }}
+                      className="relative"
+                    >
+                      {/* Timeline dot */}
+                      <div className="absolute -left-[32px] top-1 w-5 h-5 rounded-full bg-navy border-2 border-saffron flex items-center justify-center shadow-lg shadow-saffron/20">
+                        <div className="w-1.5 h-1.5 rounded-full bg-saffron animate-pulse" />
+                      </div>
+                      
+                      <div>
+                        <span className="text-[10px] font-bold text-saffron bg-saffron/10 px-2 py-0.5 rounded-md border border-saffron/20">{item.year}</span>
+                        <h4 className="text-base font-bold text-white mt-2 mb-1">{item.title}</h4>
+                        <p className="text-xs text-white/50 leading-relaxed">{item.description}</p>
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative">
-              {/* Timeline Connector Line */}
-              <div className="hidden md:block absolute top-[22px] left-[50px] right-[50px] h-0.5 bg-gradient-to-r from-saffron/20 via-saffron/40 to-saffron/20 z-0" />
-
-              {timeline.map((item, idx) => {
-                const Icon = item.icon;
-                return (
-                  <motion.div
-                    key={item.year}
-                    initial={{ opacity: 0, x: -25 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: idx * 0.15 }}
-                    className="relative z-10 flex flex-col items-start"
+              {/* Right Column: Slideshow (6 cols on desktop) */}
+              <div className="lg:col-span-6 flex flex-col h-full justify-center">
+                <h3 className="text-2xl font-rajdhani font-bold text-white mb-8 border-b border-white/5 pb-4 flex items-center gap-3">
+                  <Trophy className="text-saffron" size={20} /> Site Operations Showcase
+                </h3>
+                
+                <div className="relative w-full aspect-[4/3] rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-surface group">
+                  <AnimatePresence mode="wait">
+                    <motion.div
+                      key={currentSlide}
+                      initial={{ opacity: 0, scale: 0.97 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      exit={{ opacity: 0, scale: 1.03 }}
+                      transition={{ duration: 0.4 }}
+                      className="absolute inset-0"
+                    >
+                      <Image
+                        src={activeSlide.src}
+                        alt={activeSlide.title}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 1024px) 100vw, 50vw"
+                        priority
+                      />
+                      
+                      {/* Caption overlay */}
+                      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/85 via-black/45 to-transparent p-5 pt-12">
+                        <span className="text-[10px] uppercase font-bold tracking-widest text-saffron">{activeSlide.title}</span>
+                        <h5 className="text-white font-rajdhani font-bold text-base mt-0.5">Kushal Enterprises in Action</h5>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                  
+                  {/* Chevron controls */}
+                  <button 
+                    onClick={prevSlide}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl bg-black/60 hover:bg-black/80 text-white flex items-center justify-center hover:scale-105 transition-all opacity-0 group-hover:opacity-100 cursor-pointer z-10"
+                    aria-label="Previous slide"
                   >
-                    {/* Node Circle */}
-                    <div className="w-11 h-11 rounded-full bg-navy border-2 border-saffron flex items-center justify-center mb-4 shadow-lg shadow-saffron/10 group-hover:scale-110 transition-transform">
-                      <span className="text-xs font-bold text-saffron">{item.year}</span>
-                    </div>
-
-                    <h4 className="text-base font-bold text-white mb-2 leading-tight flex items-center gap-2">
-                      {item.title}
-                    </h4>
-                    <p className="text-xs text-white/50 leading-relaxed">
-                      {item.description}
-                    </p>
-                  </motion.div>
-                );
-              })}
+                    <ChevronLeft size={20} />
+                  </button>
+                  
+                  <button 
+                    onClick={nextSlide}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 rounded-xl bg-black/60 hover:bg-black/80 text-white flex items-center justify-center hover:scale-105 transition-all opacity-0 group-hover:opacity-100 cursor-pointer z-10"
+                    aria-label="Next slide"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                  
+                  {/* Indicator dots */}
+                  <div className="absolute bottom-4 right-5 flex gap-1.5 z-10">
+                    {galleryImages.map((_, idx) => (
+                      <button
+                        key={idx}
+                        onClick={() => setCurrentSlide(idx)}
+                        className={`h-1.5 rounded-full transition-all duration-300 ${
+                          currentSlide === idx ? 'w-4 bg-saffron' : 'w-1.5 bg-white/40'
+                        }`}
+                        aria-label={`Go to slide ${idx + 1}`}
+                      />
+                    ))}
+                  </div>
+                </div>
+              </div>
+              
             </div>
           </div>
         </div>

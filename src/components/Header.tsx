@@ -46,25 +46,6 @@ export default function Header() {
 
   return (
     <>
-      {/* Topbar */}
-      <div className="bg-navy-medium text-slate text-xs py-2.5 px-4 hidden md:block border-b border-white/5">
-        <div className="container mx-auto flex justify-between items-center max-w-7xl">
-          <div className="flex items-center space-x-6">
-            <span className="flex items-center gap-2 hover:text-saffron transition-colors cursor-pointer">
-              <Phone size={12} className="text-saffron" /> +91 90641 13345
-            </span>
-            <span className="flex items-center gap-2 hover:text-saffron transition-colors cursor-pointer">
-              <MapPin size={12} className="text-saffron" /> Deliver to: 400001 Mumbai
-            </span>
-          </div>
-          <div className="flex space-x-5">
-            <Link href="#" className="hover:text-saffron transition-colors duration-200">Bulk Orders</Link>
-            <Link href="#" className="hover:text-saffron transition-colors duration-200">Request Quote</Link>
-            <Link href="#" className="hover:text-saffron transition-colors duration-200">Track Order</Link>
-          </div>
-        </div>
-      </div>
-
       {/* Main Header */}
       <header
         className={`sticky top-0 z-50 transition-all duration-500 ${

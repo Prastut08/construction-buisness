@@ -7,7 +7,7 @@ import { useState, useEffect, useCallback } from "react";
 
 const testimonials = [
   { name: "Rajesh Patel", role: "Civil Contractor, Ahmedabad", text: "Kushal Enterprises has been our go-to supplier for the last 5 years. Their cement quality is unmatched and delivery is always on time. Our projects never face delays anymore.", rating: 5, initials: "RP", color: "from-saffron to-gold" },
-  { name: "Sunita Sharma", role: "Interior Designer, Mumbai", text: "The range of tiles and flooring options is incredible. I always find exactly what my clients need. The premium marble collection is genuinely stunning.", rating: 5, initials: "SS", color: "from-accent-blue to-blue-400" },
+  { name: "Sunita Sharma", role: "Interior Designer, West Bengal", text: "The range of tiles and flooring options is incredible. I always find exactly what my clients need. The premium marble collection is genuinely stunning.", rating: 5, initials: "SS", color: "from-accent-blue to-blue-400" },
   { name: "Vikram Singh", role: "Builder, Delhi NCR", text: "Bulk ordering with Kushal is seamless. The wholesale prices and dedicated account manager saved us lakhs on our latest residential project.", rating: 5, initials: "VS", color: "from-accent-green to-emerald-400" },
   { name: "Priya Deshmukh", role: "Architect, Pune", text: "Their quality consistency across orders is remarkable. Whether it's premium paint or structural steel, the standards never drop. Highly recommended for professionals.", rating: 5, initials: "PD", color: "from-purple-500 to-violet-400" },
 ];

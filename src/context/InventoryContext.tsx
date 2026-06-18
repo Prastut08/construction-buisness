@@ -14,6 +14,7 @@ import {
   removeBrandFromCategory,
   seedInitialDataIfEmpty,
   updateCategoryNameInFirestore,
+  updateCategoryInFirestore,
   type FirestoreCategory,
   type FirestoreGood,
   type FirestoreBrand,
@@ -52,6 +53,7 @@ export interface CategoryData {
   color: string;
   bgGradient: string;
   tagline: string;
+  image?: string;
   typesOfGoods: GoodType[];
   brands: Brand[];
 }
@@ -204,6 +206,7 @@ interface InventoryContextType {
   addCategory: (category: Omit<CategoryData, "id">) => void;
   removeCategory: (id: string) => void;
   updateCategoryName: (id: string, newName: string) => void;
+  updateCategory: (id: string, updates: Partial<CategoryData>) => void;
   addGood: (categoryId: string, good: Omit<GoodType, "id">) => void;
   updateGood: (categoryId: string, goodId: string, updates: Partial<GoodType>) => void;
   removeGood: (categoryId: string, goodId: string) => void;
@@ -366,6 +369,22 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error("Failed to update category name in Firestore:", error);
       alert("Failed to rename category: " + (error?.message || error));
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
+
+  const updateCategory = useCallback(async (id: string, updates: Partial<CategoryData>) => {
+    // Optimistic update
+    setCategories(prev => prev.map(c =>
+      c.id === id ? { ...c, ...updates } : c
+    ));
+    try {
+      setIsSyncing(true);
+      await updateCategoryInFirestore(id, updates as Partial<FirestoreCategory>);
+    } catch (error: any) {
+      console.error("Failed to update category in Firestore:", error);
+      alert("Failed to update category: " + (error?.message || error));
     } finally {
       setIsSyncing(false);
     }
@@ -554,7 +573,7 @@ export function InventoryProvider({ children }: { children: React.ReactNode }) {
   return (
     <InventoryContext.Provider value={{
       categories, isOwner, cart, cartCount, isLoading, isSyncing, loginOwner, logoutOwner,
-      addCategory, removeCategory, updateCategoryName, addGood, updateGood, removeGood, toggleAvailability,
+      addCategory, removeCategory, updateCategoryName, updateCategory, addGood, updateGood, removeGood, toggleAvailability,
       addBrand, updateBrand, removeBrand,
       addToCart, removeFromCart, updateCartQuantity, clearCart
     }}>

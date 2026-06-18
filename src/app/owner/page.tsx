@@ -3,9 +3,22 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useInventory } from "@/context/InventoryContext";
-import { Plus, Trash2, Edit2, Check, X, ShieldAlert, Pencil, Building2 } from "lucide-react";
+import { Plus, Trash2, Edit2, Check, X, ShieldAlert, Pencil, Building2, Sparkles } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import Header from "@/components/Header";
+import { motion, AnimatePresence } from "framer-motion";
+
+const ColorThemes = [
+  { name: "Slate", value: "slate", color: "from-slate-500/20 to-slate-700/10", bgGradient: "from-slate-600 to-slate-800" },
+  { name: "Stone", value: "stone", color: "from-stone-500/20 to-stone-700/10", bgGradient: "from-stone-600 to-stone-800" },
+  { name: "Orange/Red", value: "orange", color: "from-orange-500/20 to-red-600/10", bgGradient: "from-orange-500 to-red-600" },
+  { name: "Blue", value: "blue", color: "from-blue-500/20 to-sky-600/10", bgGradient: "from-blue-500 to-sky-600" },
+  { name: "Yellow/Amber", value: "yellow", color: "from-yellow-500/20 to-amber-600/10", bgGradient: "from-yellow-500 to-amber-600" },
+  { name: "Rose/Pink", value: "rose", color: "from-rose-500/20 to-pink-600/10", bgGradient: "from-rose-500 to-pink-600" },
+  { name: "Zinc", value: "zinc", color: "from-zinc-500/20 to-zinc-700/10", bgGradient: "from-zinc-600 to-zinc-800" },
+  { name: "Amber/Brown", value: "amber", color: "from-amber-600/20 to-amber-800/10", bgGradient: "from-amber-600 to-amber-800" },
+];
 
 export default function OwnerDashboard() {
   const {
@@ -14,6 +27,7 @@ export default function OwnerDashboard() {
     addCategory,
     removeCategory,
     updateCategoryName,
+    updateCategory,
     addGood,
     updateGood,
     removeGood,
@@ -39,6 +53,56 @@ export default function OwnerDashboard() {
   const [newBrand, setNewBrand] = useState({ name: "", description: "", popularity: "" });
   const [editingBrand, setEditingBrand] = useState<{ catId: string; originalName: string } | null>(null);
   const [editBrandForm, setEditBrandForm] = useState({ name: "", description: "", popularity: "" });
+  
+  const [isCategoryGenerating, setIsCategoryGenerating] = useState<string | null>(null);
+
+  const handleRegenerateCategoryImage = async (catId: string, name: string, tagline: string) => {
+    if (isCategoryGenerating) return;
+    setIsCategoryGenerating(catId);
+    try {
+      const res = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: name,
+          description: tagline || ""
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.imageUrl) {
+          await updateCategory(catId, { image: data.imageUrl });
+        }
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsCategoryGenerating(null);
+    }
+  };
+
+  // Add category modal states
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [isCategorySaving, setIsCategorySaving] = useState(false);
+  const [categoryForm, setCategoryForm] = useState({
+    name: "",
+    tagline: "",
+    colorTheme: "slate",
+  });
+
+  // Add good modal states
+  const [showAddGoodModal, setShowAddGoodModal] = useState(false);
+  const [targetCatIdForGood, setTargetCatIdForGood] = useState<string | null>(null);
+  const [isProductSaving, setIsProductSaving] = useState(false);
+  const [goodForm, setGoodForm] = useState({
+    name: "",
+    price: "",
+    description: "",
+    image: "",
+    autoGenerateImage: true,
+  });
 
   useEffect(() => {
     setMounted(true);
@@ -65,19 +129,105 @@ export default function OwnerDashboard() {
 
   // ─── Category Handlers ───────────────────────────────────────────────────
 
-  const handleAddNewCategory = () => {
-    const name = prompt("Enter new category name:");
-    if (!name || name.trim() === "") return;
+  const handleSaveCategory = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!categoryForm.name.trim()) return;
+
+    setIsCategorySaving(true);
+    const theme = ColorThemes.find(t => t.value === categoryForm.colorTheme) || ColorThemes[0];
+    let imageUrl = "";
+
+    try {
+      const res = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: categoryForm.name,
+          description: categoryForm.tagline
+        })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        imageUrl = data.imageUrl || "";
+      }
+    } catch (err) {
+      console.error("Failed to generate category image on save:", err);
+    }
+
     addCategory({
-      name: name.trim(),
+      name: categoryForm.name.trim(),
       iconName: "Layers",
-      color: "from-slate-500/20 to-slate-700/10",
-      bgGradient: "from-slate-600 to-slate-800",
-      tagline: "New Category",
+      color: theme.color,
+      bgGradient: theme.bgGradient,
+      tagline: categoryForm.tagline.trim() || "Quality structural materials.",
+      image: imageUrl,
       typesOfGoods: [],
       brands: [],
     });
+
+    setIsCategorySaving(false);
+    setShowAddCategoryModal(false);
+    setCategoryForm({
+      name: "",
+      tagline: "",
+      colorTheme: "slate",
+    });
   };
+
+  const handleSaveGood = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!targetCatIdForGood || !goodForm.name.trim()) return;
+
+    setIsProductSaving(true);
+    let imageUrl = goodForm.image.trim() || "";
+
+    if (goodForm.autoGenerateImage && !imageUrl) {
+      try {
+        const res = await fetch("/api/generate-image", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            name: goodForm.name,
+            description: goodForm.description
+          })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          imageUrl = data.imageUrl || "";
+        }
+      } catch (err) {
+        console.error("Failed to auto-generate image on save:", err);
+      }
+    }
+
+    if (!imageUrl) {
+      imageUrl = "https://images.unsplash.com/photo-1541888946425-d81bb19240f5?q=80&w=800&auto=format&fit=crop";
+    }
+
+    addGood(targetCatIdForGood, {
+      name: goodForm.name.trim(),
+      price: goodForm.price.trim() || "₹0",
+      description: goodForm.description.trim() || "No description provided.",
+      image: imageUrl,
+      isAvailable: true,
+    });
+
+    setIsProductSaving(false);
+    setShowAddGoodModal(false);
+    setGoodForm({
+      name: "",
+      price: "",
+      description: "",
+      image: "",
+      autoGenerateImage: true,
+    });
+  };
+
+  // ─── Category Inline-Edit Handlers ─────────────────────────────────────────
 
   const startEditingCategory = (categoryId: string, currentName: string) => {
     setEditingCategoryId(categoryId);
@@ -97,28 +247,14 @@ export default function OwnerDashboard() {
   };
 
   const handleDeleteCategory = (categoryId: string, categoryName: string) => {
-    if (confirm(`Are you sure you want to delete the category "${categoryName}" and all its products?`)) {
+    if (confirm(`Are you sure you want to delete "${categoryName}" and all its products?`)) {
       removeCategory(categoryId);
     }
   };
 
-  // ─── Product Handlers ────────────────────────────────────────────────────
+  // ─── Product Inline-Edit Handlers ───────────────────────────────────────────
 
-  const handleAddNewGood = (categoryId: string) => {
-    const name = prompt("Enter product name:");
-    if (!name || name.trim() === "") return;
-    const price = prompt("Enter price (e.g. ₹500 / bag):") || "₹0";
-    const description = prompt("Enter product description:") || "No description provided.";
-    addGood(categoryId, {
-      name: name.trim(),
-      price: price.trim(),
-      description: description.trim(),
-      image: "https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?q=80&w=800&auto=format&fit=crop",
-      isAvailable: true,
-    });
-  };
-
-  const startEditingGood = (good: any) => {
+  const startEditingGood = (good: { id: string; name: string; price: string; description: string }) => {
     setEditingGoodId(good.id);
     setEditForm({ name: good.name, price: good.price, description: good.description });
   };
@@ -186,7 +322,7 @@ export default function OwnerDashboard() {
             <p className="text-white/50 text-sm">Manage categories and inventory</p>
           </div>
           <button
-            onClick={handleAddNewCategory}
+            onClick={() => setShowAddCategoryModal(true)}
             className="bg-saffron hover:bg-amber-400 text-navy font-bold px-5 py-2.5 rounded-xl flex items-center gap-2 transition-colors"
           >
             <Plus size={18} /> Add Category
@@ -237,6 +373,15 @@ export default function OwnerDashboard() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-lg overflow-hidden relative border border-white/10 flex items-center justify-center bg-white/5 shrink-0">
+                      {category.image ? (
+                        <Image src={category.image} alt={category.name} fill sizes="40px" className="object-cover" />
+                      ) : (
+                        <div className="w-full h-full bg-white/10 flex items-center justify-center text-white/50">
+                          <Plus size={16} />
+                        </div>
+                      )}
+                    </div>
                     <h2 className="text-2xl font-rajdhani font-bold text-white">{category.name}</h2>
                     <button
                       onClick={() => startEditingCategory(category.id, category.name)}
@@ -245,13 +390,24 @@ export default function OwnerDashboard() {
                     >
                       <Pencil size={15} />
                     </button>
+                    <button
+                      onClick={() => handleRegenerateCategoryImage(category.id, category.name, category.tagline)}
+                      disabled={isCategoryGenerating === category.id}
+                      className="text-white/40 hover:text-saffron bg-white/5 hover:bg-white/10 p-1.5 rounded-lg transition-colors disabled:opacity-50"
+                      title="Regenerate Category Photo"
+                    >
+                      <Sparkles size={15} className={isCategoryGenerating === category.id ? "animate-spin text-saffron" : ""} />
+                    </button>
                   </div>
                 )}
 
                 {/* Category Actions */}
                 <div className="flex gap-2 shrink-0">
                   <button
-                    onClick={() => handleAddNewGood(category.id)}
+                    onClick={() => {
+                      setTargetCatIdForGood(category.id);
+                      setShowAddGoodModal(true);
+                    }}
                     className="bg-white/10 hover:bg-white/20 text-white px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-sm transition-colors"
                   >
                     <Plus size={14} /> Add Item
@@ -509,6 +665,236 @@ export default function OwnerDashboard() {
           ))}
         </div>
       </div>
+
+      {/* Add Category Modal */}
+      <AnimatePresence>
+        {showAddCategoryModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="glass-card rounded-2xl w-full max-w-md p-6 relative border border-white/10 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowAddCategoryModal(false)}
+                className="absolute top-4 right-4 text-white/50 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
+              >
+                <X size={20} />
+              </button>
+              <h3 className="text-2xl font-rajdhani font-bold text-white mb-2">Create Category</h3>
+              <p className="text-white/50 text-xs mb-6">Add a new commodity category to the inventory catalog.</p>
+
+              <form onSubmit={handleSaveCategory} className="space-y-4">
+                <div>
+                  <label className="text-white/40 text-[10px] font-semibold uppercase tracking-wider block mb-1">Category Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={categoryForm.name}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, name: e.target.value })}
+                    placeholder="e.g. Pipes & Fitting"
+                    className="w-full bg-navy border border-white/10 focus:border-saffron/50 rounded-xl px-4 py-2.5 text-white text-sm outline-none"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="text-white/40 text-[10px] font-semibold uppercase tracking-wider block mb-1">Tagline / Description</label>
+                  <input
+                    type="text"
+                    value={categoryForm.tagline}
+                    onChange={(e) => setCategoryForm({ ...categoryForm, tagline: e.target.value })}
+                    placeholder="e.g. High pressure plumbing solutions."
+                    className="w-full bg-navy border border-white/10 focus:border-saffron/50 rounded-xl px-4 py-2.5 text-white text-sm outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-white/40 text-[10px] font-semibold uppercase tracking-wider block mb-2">Color Palette</label>
+                  <div className="flex flex-wrap gap-2">
+                    {ColorThemes.map((theme) => (
+                      <button
+                        key={theme.value}
+                        type="button"
+                        onClick={() => setCategoryForm({ ...categoryForm, colorTheme: theme.value })}
+                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                          categoryForm.colorTheme === theme.value
+                            ? 'bg-saffron/20 border-saffron text-saffron'
+                            : 'bg-white/5 border-white/5 text-white/60 hover:border-white/10 hover:text-white'
+                        }`}
+                      >
+                        {theme.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="pt-4 flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={isCategorySaving}
+                    className="flex-1 bg-saffron hover:bg-gold disabled:opacity-50 text-navy font-bold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
+                  >
+                    {isCategorySaving ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-navy/20 border-t-navy rounded-full animate-spin" />
+                        Creating...
+                      </>
+                    ) : (
+                      'Save Category'
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddCategoryModal(false)}
+                    className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl text-sm transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Add Product Modal */}
+      <AnimatePresence>
+        {showAddGoodModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 20 }}
+              className="glass-card rounded-2xl w-full max-w-md p-6 relative border border-white/10 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                onClick={() => setShowAddGoodModal(false)}
+                className="absolute top-4 right-4 text-white/50 hover:text-white p-1 rounded-lg hover:bg-white/5 transition-colors"
+              >
+                <X size={20} />
+              </button>
+              <h3 className="text-2xl font-rajdhani font-bold text-white mb-2">Add Product Item</h3>
+              <p className="text-white/50 text-xs mb-6">List a new material type under the selected category.</p>
+
+              <form onSubmit={handleSaveGood} className="space-y-4">
+                <div>
+                  <label className="text-white/40 text-[10px] font-semibold uppercase tracking-wider block mb-1">Target Category</label>
+                  <select
+                    value={targetCatIdForGood || ""}
+                    onChange={(e) => setTargetCatIdForGood(e.target.value)}
+                    className="w-full bg-navy border border-white/10 focus:border-saffron/50 rounded-xl px-4 py-2.5 text-white text-sm outline-none"
+                  >
+                    <option value="" disabled>Select a category</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.id}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
+
+                <div>
+                  <label className="text-white/40 text-[10px] font-semibold uppercase tracking-wider block mb-1">Product Name *</label>
+                  <input
+                    type="text"
+                    required
+                    value={goodForm.name}
+                    onChange={(e) => setGoodForm({ ...goodForm, name: e.target.value })}
+                    placeholder="e.g. Astral CPVC Pipe 1 inch"
+                    className="w-full bg-navy border border-white/10 focus:border-saffron/50 rounded-xl px-4 py-2.5 text-white text-sm outline-none"
+                    autoFocus
+                  />
+                </div>
+
+                <div>
+                  <label className="text-white/40 text-[10px] font-semibold uppercase tracking-wider block mb-1">Wholesale Price *</label>
+                  <input
+                    type="text"
+                    required
+                    value={goodForm.price}
+                    onChange={(e) => setGoodForm({ ...goodForm, price: e.target.value })}
+                    placeholder="e.g. ₹180 / 10ft"
+                    className="w-full bg-navy border border-white/10 focus:border-saffron/50 rounded-xl px-4 py-2.5 text-white text-sm outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-white/40 text-[10px] font-semibold uppercase tracking-wider block mb-1">Product Description</label>
+                  <textarea
+                    value={goodForm.description}
+                    onChange={(e) => setGoodForm({ ...goodForm, description: e.target.value })}
+                    placeholder="Describe material dimensions, quality grade, usage details..."
+                    rows={3}
+                    className="w-full bg-navy border border-white/10 focus:border-saffron/50 rounded-xl px-4 py-2.5 text-white text-sm outline-none resize-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="text-white/40 text-[10px] font-semibold uppercase tracking-wider block mb-1">Custom Image URL (Optional)</label>
+                  <input
+                    type="url"
+                    value={goodForm.image}
+                    onChange={(e) => setGoodForm({ ...goodForm, image: e.target.value })}
+                    placeholder="Leave empty to auto-generate via Pexels"
+                    className="w-full bg-navy border border-white/10 focus:border-saffron/50 rounded-xl px-4 py-2.5 text-white text-sm outline-none mb-2"
+                  />
+                  
+                  {!goodForm.image && (
+                    <div className="flex items-center gap-2 mt-1">
+                      <input
+                        type="checkbox"
+                        id="autoGenerateCheckbox"
+                        checked={goodForm.autoGenerateImage}
+                        onChange={(e) => setGoodForm({ ...goodForm, autoGenerateImage: e.target.checked })}
+                        className="rounded accent-saffron bg-surface border-white/10 cursor-pointer"
+                      />
+                      <label htmlFor="autoGenerateCheckbox" className="text-white/60 text-xs select-none cursor-pointer flex items-center gap-1">
+                        <Sparkles size={12} className="text-saffron animate-pulse" /> Auto-generate photo using Pexels AI
+                      </label>
+                    </div>
+                  )}
+                </div>
+
+                <div className="pt-4 flex gap-2">
+                  <button
+                    type="submit"
+                    disabled={isProductSaving}
+                    className="flex-1 bg-saffron hover:bg-gold disabled:opacity-50 text-navy font-bold py-3 rounded-xl text-sm transition-all flex items-center justify-center gap-2"
+                  >
+                    {isProductSaving ? (
+                      <>
+                        <div className="w-4 h-4 border-2 border-navy/20 border-t-navy rounded-full animate-spin" />
+                        Saving & Generating...
+                      </>
+                    ) : (
+                      'Save Product'
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddGoodModal(false)}
+                    className="flex-1 bg-white/10 hover:bg-white/20 text-white font-bold py-3 rounded-xl text-sm transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Shield, Sparkles, Building, CheckCircle2, ShoppingCart, Tag, Layers, Hammer, Droplets, Zap, Paintbrush, Lock, TreePine, LayoutGrid, Minus, Plus, ArrowRight } from "lucide-react";
 import Image from "next/image";
@@ -21,12 +21,78 @@ const IconMap: Record<string, React.ReactNode> = {
 };
 
 export default function Categories() {
-  const { categories, addToCart, updateGood } = useInventory();
+  const { categories, addToCart, updateGood, updateCategory, isOwner } = useInventory();
   const [selectedCategory, setSelectedCategory] = useState<CategoryData | null>(null);
   const [selectedGood, setSelectedGood] = useState<GoodType | null>(null);
   const [addedToCart, setAddedToCart] = useState<string | null>(null);
   const [productQuantity, setProductQuantity] = useState<number>(1);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isCategoryGenerating, setIsCategoryGenerating] = useState<string | null>(null);
+  
+  const attemptedCategoryIdsRef = useRef<Set<string>>(new Set());
+
+  // Auto-generate missing category images in the background on mount/load
+  useEffect(() => {
+    const generateAllMissing = async () => {
+      for (const cat of categories) {
+        if (!cat.image && !attemptedCategoryIdsRef.current.has(cat.id)) {
+          attemptedCategoryIdsRef.current.add(cat.id);
+          try {
+            const res = await fetch("/api/generate-image", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({
+                name: cat.name,
+                description: cat.tagline || ""
+              })
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (data.imageUrl) {
+                await updateCategory(cat.id, { image: data.imageUrl });
+              }
+            }
+          } catch (e) {
+            console.error("Failed to background-generate category image for", cat.name, e);
+          }
+        }
+      }
+    };
+    if (categories && categories.length > 0) {
+      generateAllMissing();
+    }
+  }, [categories, updateCategory]);
+
+  const handleAutoGenerateCategoryImage = async (category: CategoryData) => {
+    if (isCategoryGenerating) return;
+    console.log("AI Generation: Starting for category", category.name);
+    setIsCategoryGenerating(category.id);
+    try {
+      const res = await fetch("/api/generate-image", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          name: category.name,
+          description: category.tagline || ""
+        })
+      });
+      if (!res.ok) throw new Error(`Server returned status ${res.status}`);
+      const data = await res.json();
+      if (data.imageUrl) {
+        await updateCategory(category.id, { image: data.imageUrl });
+        console.log("AI Category Generation Success!");
+      }
+    } catch (error: any) {
+      console.error("AI Category Generation Failed:", error);
+      alert("AI Generation Error: " + (error?.message || error));
+    } finally {
+      setIsCategoryGenerating(null);
+    }
+  };
 
   const handleAutoGenerateImage = async (catId: string, good: GoodType) => {
     if (isGenerating) return;
@@ -117,8 +183,14 @@ export default function Categories() {
               initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
               transition={{ delay: index * 0.05, duration: 0.5 }} whileHover={{ y: -8, scale: 1.03 }}
               className="glass-card glass-card-hover rounded-2xl p-5 flex flex-col items-center justify-center cursor-pointer text-center relative group min-h-[140px]">
-              <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${category.color} flex items-center justify-center mb-3 group-hover:scale-110 transition-transform duration-300 text-white/80`}>
-                {IconMap[category.iconName] || <Layers size={28} strokeWidth={1.5} />}
+              <div className="w-14 h-14 rounded-xl overflow-hidden relative mb-3 group-hover:scale-110 transition-transform duration-300 border border-white/10 flex items-center justify-center bg-white/5">
+                {category.image ? (
+                  <Image src={category.image} alt={category.name} fill sizes="56px" className="object-cover" />
+                ) : (
+                  <div className={`w-full h-full bg-gradient-to-br ${category.color} flex items-center justify-center text-white/80`}>
+                    {IconMap[category.iconName] || <Layers size={28} strokeWidth={1.5} />}
+                  </div>
+                )}
               </div>
               <h3 className="font-rajdhani font-bold text-white text-sm leading-tight">{category.name}</h3>
               <div className="absolute bottom-2 opacity-0 group-hover:opacity-100 transition-opacity text-[9px] text-saffron font-bold uppercase tracking-wider">
@@ -152,9 +224,29 @@ export default function Categories() {
                     <X size={20} />
                   </button>
                   <div className="flex items-center gap-4 mb-2 relative z-10">
-                    <span className="text-white/90 bg-white/15 p-3 rounded-2xl backdrop-blur-sm">
-                      {IconMap[activeCategory.iconName] || <Layers size={28} />}
-                    </span>
+                    {activeCategory.image ? (
+                      <div 
+                        onClick={() => isOwner && handleAutoGenerateCategoryImage(activeCategory)}
+                        className={`w-16 h-16 rounded-2xl overflow-hidden relative border border-white/20 shadow-md bg-white/10 shrink-0 ${isOwner ? 'cursor-pointer hover:border-saffron/50 group/catimg' : ''}`}
+                        title={isOwner ? "Owner: Click to regenerate category image" : undefined}
+                      >
+                        <Image src={activeCategory.image} alt={activeCategory.name} fill sizes="64px" className="object-cover" />
+                        {isOwner && (
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/catimg:opacity-100 transition-opacity flex items-center justify-center">
+                            <Sparkles size={16} className="text-saffron animate-pulse" />
+                          </div>
+                        )}
+                        {isCategoryGenerating === activeCategory.id && (
+                          <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-10">
+                            <div className="w-5 h-5 rounded-full border-2 border-saffron/20 border-t-saffron animate-spin" />
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-white/90 bg-white/15 p-3 rounded-2xl backdrop-blur-sm shrink-0">
+                        {IconMap[activeCategory.iconName] || <Layers size={28} />}
+                      </span>
+                    )}
                     <div>
                       <h3 className="text-3xl md:text-4xl font-rajdhani font-bold">{activeCategory.name}</h3>
                       <p className="text-white/70 font-medium text-sm max-w-2xl mt-1">{activeCategory.tagline}</p>

@@ -40,6 +40,7 @@ export interface FirestoreCategory {
   color: string;
   bgGradient: string;
   tagline: string;
+  image?: string;
   typesOfGoods: FirestoreGood[];
   brands: FirestoreBrand[];
   createdAt?: number;
@@ -73,6 +74,7 @@ export function subscribeToCategoriesRealtime(
           color: data.color || "",
           bgGradient: data.bgGradient || "",
           tagline: data.tagline || "",
+          image: data.image || "",
           typesOfGoods: (data.typesOfGoods || []).map((g: Record<string, unknown>) => ({
             id: g.id as string || "",
             name: g.name as string || "",
@@ -120,6 +122,7 @@ export async function fetchAllCategories(): Promise<FirestoreCategory[]> {
       color: data.color,
       bgGradient: data.bgGradient,
       tagline: data.tagline,
+      image: data.image || "",
       typesOfGoods: data.typesOfGoods || [],
       brands: data.brands || [],
       createdAt: data.createdAt || 0,
@@ -140,6 +143,7 @@ export async function saveCategory(category: FirestoreCategory): Promise<void> {
     color: category.color,
     bgGradient: category.bgGradient,
     tagline: category.tagline,
+    image: category.image || "",
     typesOfGoods: category.typesOfGoods.map((g) => ({
       id: g.id,
       name: g.name,
@@ -317,6 +321,7 @@ export async function seedInitialDataIfEmpty(
         color: category.color,
         bgGradient: category.bgGradient,
         tagline: category.tagline,
+        image: category.image || "",
         typesOfGoods: category.typesOfGoods.map((g) => ({
           id: g.id,
           name: g.name,
@@ -349,4 +354,12 @@ export async function updateCategoryNameInFirestore(
 ): Promise<void> {
   const docRef = doc(db, CATEGORIES_COLLECTION, categoryId);
   await updateDoc(docRef, { name: newName });
+}
+
+export async function updateCategoryInFirestore(
+  categoryId: string,
+  updates: Partial<FirestoreCategory>
+): Promise<void> {
+  const docRef = doc(db, CATEGORIES_COLLECTION, categoryId);
+  await updateDoc(docRef, updates);
 }

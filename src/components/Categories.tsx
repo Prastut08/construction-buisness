@@ -421,15 +421,7 @@ export default function Categories() {
                               </button>
                             </div>
                           </div>
-                          
-                          {/* Close Option at the Bottom */}
-                          <button
-                            onClick={() => handleSelectGood(null)}
-                            className="mt-4 w-full py-2.5 rounded-xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
-                            title="Close product details"
-                          >
-                            <X size={14} /> Close Product Details
-                          </button>
+
                         </motion.div>
                       ) : (
                         <div className="flex flex-col items-center justify-center text-center h-full py-12 text-white/20">
@@ -443,11 +435,17 @@ export default function Categories() {
                 </div>
 
                  {/* Modal Footer */}
-                <div className="p-5 border-t border-white/5 flex justify-center items-center">
+                <div className="p-5 border-t border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
                   <div className="flex items-center gap-2 text-xs text-white/30 font-medium">
                     <Shield size={14} className="text-accent-green" />
                     All products sourced from verified authorized brand yards.
                   </div>
+                  <button
+                    onClick={() => { setSelectedCategory(null); handleSelectGood(null); }}
+                    className="bg-white/10 hover:bg-white/25 text-white font-bold py-2.5 px-6 rounded-xl text-xs transition-all cursor-pointer flex items-center gap-1.5 border border-white/10 hover:border-white/20 shrink-0"
+                  >
+                    <X size={12} /> Close Category
+                  </button>
                 </div>
               </motion.div>
             </motion.div>

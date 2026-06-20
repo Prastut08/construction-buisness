@@ -182,13 +182,13 @@ export default function Categories() {
               onClick={() => { setSelectedCategory(category); handleSelectGood(null); }}
               initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
               transition={{ delay: index * 0.05, duration: 0.5 }} whileHover={{ y: -8, scale: 1.03 }}
-              className="glass-card glass-card-hover rounded-2xl p-5 flex flex-col items-center justify-center cursor-pointer text-center relative group min-h-[140px]">
-              <div className="w-14 h-14 rounded-xl overflow-hidden relative mb-3 group-hover:scale-110 transition-transform duration-300 border border-white/10 flex items-center justify-center bg-white/5">
+              className="glass-card glass-card-hover rounded-2xl p-5 flex flex-col items-center justify-center cursor-pointer text-center relative group min-h-[150px]">
+              <div className="w-20 h-20 rounded-xl overflow-hidden relative mb-3 group-hover:scale-110 transition-transform duration-300 border border-white/10 flex items-center justify-center bg-white/5">
                 {category.image ? (
-                  <Image src={category.image} alt={category.name} fill sizes="56px" className="object-cover" />
+                  <Image src={category.image} alt={category.name} fill sizes="80px" className="object-cover" />
                 ) : (
                   <div className={`w-full h-full bg-gradient-to-br ${category.color} flex items-center justify-center text-white/80`}>
-                    {IconMap[category.iconName] || <Layers size={28} strokeWidth={1.5} />}
+                    {IconMap[category.iconName] || <Layers size={36} strokeWidth={1.5} />}
                   </div>
                 )}
               </div>
@@ -223,14 +223,14 @@ export default function Categories() {
                     className="absolute top-6 right-6 bg-white/10 hover:bg-white/25 hover:rotate-90 transition-all rounded-full p-2 text-white/95 cursor-pointer z-50">
                     <X size={20} />
                   </button>
-                  <div className="flex items-center gap-4 mb-2 relative z-10">
+                  <div className="flex items-center gap-5 mb-2 relative z-10">
                     {activeCategory.image ? (
                       <div 
                         onClick={() => isOwner && handleAutoGenerateCategoryImage(activeCategory)}
-                        className={`w-16 h-16 rounded-2xl overflow-hidden relative border border-white/20 shadow-md bg-white/10 shrink-0 ${isOwner ? 'cursor-pointer hover:border-saffron/50 group/catimg' : ''}`}
+                        className={`w-28 h-28 rounded-2xl overflow-hidden relative border border-white/20 shadow-md bg-white/10 shrink-0 ${isOwner ? 'cursor-pointer hover:border-saffron/50 group/catimg' : ''}`}
                         title={isOwner ? "Owner: Click to regenerate category image" : undefined}
                       >
-                        <Image src={activeCategory.image} alt={activeCategory.name} fill sizes="64px" className="object-cover" />
+                        <Image src={activeCategory.image} alt={activeCategory.name} fill sizes="112px" className="object-cover" />
                         {isOwner && (
                           <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/catimg:opacity-100 transition-opacity flex items-center justify-center">
                             <Sparkles size={16} className="text-saffron animate-pulse" />
@@ -243,8 +243,8 @@ export default function Categories() {
                         )}
                       </div>
                     ) : (
-                      <span className="text-white/90 bg-white/15 p-3 rounded-2xl backdrop-blur-sm shrink-0">
-                        {IconMap[activeCategory.iconName] || <Layers size={28} />}
+                      <span className="text-white/90 bg-white/15 p-5 rounded-2xl backdrop-blur-sm shrink-0">
+                        {IconMap[activeCategory.iconName] || <Layers size={36} />}
                       </span>
                     )}
                     <div>

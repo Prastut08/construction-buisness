@@ -373,12 +373,12 @@ export default function OwnerDashboard() {
                   </div>
                 ) : (
                   <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-lg overflow-hidden relative border border-white/10 flex items-center justify-center bg-white/5 shrink-0">
+                    <div className="w-16 h-16 rounded-lg overflow-hidden relative border border-white/10 flex items-center justify-center bg-white/5 shrink-0">
                       {category.image ? (
-                        <Image src={category.image} alt={category.name} fill sizes="40px" className="object-cover" />
+                        <Image src={category.image} alt={category.name} fill sizes="64px" className="object-cover" />
                       ) : (
                         <div className="w-full h-full bg-white/10 flex items-center justify-center text-white/50">
-                          <Plus size={16} />
+                          <Plus size={20} />
                         </div>
                       )}
                     </div>

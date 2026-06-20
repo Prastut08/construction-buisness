@@ -69,12 +69,12 @@ export default function CatalogPage() {
                   }`}
                 >
                   <div className="col-span-1 md:col-span-4 flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl overflow-hidden relative border border-white/10 flex items-center justify-center bg-white/5 shrink-0">
+                    <div className="w-16 h-16 rounded-xl overflow-hidden relative border border-white/10 flex items-center justify-center bg-white/5 shrink-0">
                       {category.image ? (
-                        <Image src={category.image} alt={category.name} fill sizes="40px" className="object-cover" />
+                        <Image src={category.image} alt={category.name} fill sizes="64px" className="object-cover" />
                       ) : (
                         <div className={`w-full h-full bg-gradient-to-br ${category.color} flex items-center justify-center text-white/80`}>
-                          {IconMap[category.iconName] || <Layers size={20} />}
+                          {IconMap[category.iconName] || <Layers size={28} />}
                         </div>
                       )}
                     </div>

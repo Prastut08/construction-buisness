@@ -421,6 +421,15 @@ export default function Categories() {
                               </button>
                             </div>
                           </div>
+                          
+                          {/* Close Option at the Bottom */}
+                          <button
+                            onClick={() => handleSelectGood(null)}
+                            className="mt-4 w-full py-2.5 rounded-xl border border-white/10 hover:border-white/20 bg-white/5 hover:bg-white/10 text-white/80 hover:text-white font-bold text-xs transition-all flex items-center justify-center gap-2 cursor-pointer"
+                            title="Close product details"
+                          >
+                            <X size={14} /> Close Product Details
+                          </button>
                         </motion.div>
                       ) : (
                         <div className="flex flex-col items-center justify-center text-center h-full py-12 text-white/20">

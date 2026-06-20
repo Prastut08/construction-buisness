@@ -383,9 +383,18 @@ export default function Categories() {
                                 >
                                   <Minus size={12} />
                                 </button>
-                                <span className="text-white text-sm font-bold w-8 text-center select-none">
-                                  {productQuantity}
-                                </span>
+                                <input
+                                  type="number"
+                                  min={1}
+                                  value={productQuantity}
+                                  onChange={(e) => {
+                                    const val = parseInt(e.target.value, 10);
+                                    if (!isNaN(val) && val >= 1) setProductQuantity(val);
+                                    else if (e.target.value === "") setProductQuantity(1);
+                                  }}
+                                  className="text-white text-sm font-bold w-12 text-center bg-transparent outline-none border-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                  title="Enter quantity"
+                                />
                                 <button 
                                   onClick={() => setProductQuantity(prev => prev + 1)}
                                   className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/15 hover:text-white text-white/60 flex items-center justify-center transition-colors cursor-pointer"
